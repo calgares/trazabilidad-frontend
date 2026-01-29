@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/services/supabase';
 import { useAuth } from '@/context/auth-context';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface Article {
     id: string;
@@ -18,8 +19,16 @@ export interface ChecklistItem {
     categoria: string;
     requerido_por_rol: string;
     orden: number;
-    completado?: boolean; // Joined status
+    completado?: boolean;
 }
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
 
 export function useKnowledgeBase() {
     const [articles, setArticles] = useState<Article[]>([]);
@@ -30,14 +39,15 @@ export function useKnowledgeBase() {
     const fetchArticles = useCallback(async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('knowledge_base_articles')
-                .select('*')
-                .order('orden', { ascending: true });
+            const response = await fetch(`${API_URL}/api/knowledge-base`, {
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al cargar artículos');
+            }
 
-            // Simple Filter by Role (Client side for simplicity, seeing as RLS is public read)
+            const data = await response.json();
             const filtered = (data || []).filter((art: Article) => {
                 if (art.rol_requerido === 'TODOS') return true;
                 if (!profile?.roles?.nombre) return false;
@@ -72,44 +82,22 @@ export function useChecklist() {
 
         try {
             setLoading(true);
-
-            // 1. Fetch Checklist Items
-            const { data: itemsData, error: itemsError } = await supabase
-                .from('onboarding_checklist')
-                .select('*')
-                .order('orden');
-
-            if (itemsError) throw itemsError;
-
-            // 2. Fetch User Progress
-            const { data: progressData, error: progressError } = await supabase
-                .from('user_checklist_progress')
-                .select('checklist_id, completado')
-                .eq('usuario_id', user.id);
-
-            if (progressError) throw progressError;
-
-            // 3. Merge
-            const progressMap = new Map();
-            progressData?.forEach((p: any) => {
-                if (p.completado) progressMap.set(p.checklist_id, true);
+            const response = await fetch(`${API_URL}/api/checklist?usuario_id=${user.id}`, {
+                headers: getAuthHeaders()
             });
 
-            const merged = (itemsData || []).map((item: ChecklistItem) => ({
-                ...item,
-                completado: progressMap.has(item.id)
-            }));
+            if (!response.ok) {
+                throw new Error('Error al cargar checklist');
+            }
 
-            // Filter optional if needed, but for now show all relevant to role
-            // Filter by Admin logic if item is admin only?
-            const filtered = merged.filter((item: ChecklistItem) => {
+            const data = await response.json();
+            const filtered = (data || []).filter((item: ChecklistItem) => {
                 if (item.requerido_por_rol === 'ADMIN' && profile?.roles?.nombre !== 'Administrador') return false;
                 return true;
             });
 
             setChecklist(filtered);
 
-            // Calculate Progress
             const completedCount = filtered.filter((i: ChecklistItem) => i.completado).length;
             const total = filtered.length;
             setProgress(total > 0 ? Math.round((completedCount / total) * 100) : 0);
@@ -125,38 +113,25 @@ export function useChecklist() {
         if (!user) return;
 
         try {
-            // Optimistic update
             setChecklist(prev => prev.map(i => i.id === itemId ? { ...i, completado: !currentStatus } : i));
 
-            if (!currentStatus) {
-                // Mark as done
-                const { error } = await supabase
-                    .from('user_checklist_progress')
-                    .upsert({
-                        checklist_id: itemId,
-                        usuario_id: user.id,
-                        completado: true,
-                        fecha_completado: new Date().toISOString()
-                    }, { onConflict: 'checklist_id, usuario_id' });
-                if (error) throw error;
-            } else {
-                // Mark as incomplete
-                const { error } = await supabase
-                    .from('user_checklist_progress')
-                    .update({ completado: false })
-                    .eq('checklist_id', itemId)
-                    .eq('usuario_id', user.id);
-                if (error) throw error;
+            const response = await fetch(`${API_URL}/api/checklist/${itemId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    usuario_id: user.id,
+                    completado: !currentStatus
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al actualizar item');
             }
 
-            // Re-calculate progress in background or just wait for next fetch
-            // Let's refetch to be safe/consistent
             fetchChecklist();
-
         } catch (err: any) {
             console.error("Error toggling item:", err);
             setError(err.message);
-            // Revert on error could be implemented here
             fetchChecklist();
         }
     };

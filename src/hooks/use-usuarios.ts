@@ -1,5 +1,14 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/services/supabase'
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
 
 export function useUsuarios() {
     const [usuarios, setUsuarios] = useState<any[]>([])
@@ -10,12 +19,15 @@ export function useUsuarios() {
     const fetchUsuarios = useCallback(async () => {
         try {
             setLoading(true)
-            const { data, error } = await supabase
-                .from('perfiles')
-                .select('*, roles(nombre)')
-                .order('nombre', { ascending: true })
+            const response = await fetch(`${API_URL}/api/usuarios`, {
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error
+            if (!response.ok) {
+                throw new Error('Error al cargar usuarios');
+            }
+
+            const data = await response.json();
             setUsuarios(data || [])
         } catch (err: any) {
             setError(err.message)
@@ -26,12 +38,15 @@ export function useUsuarios() {
 
     const fetchRoles = useCallback(async () => {
         try {
-            const { data, error } = await supabase
-                .from('roles')
-                .select('*')
-                .order('id', { ascending: true })
+            const response = await fetch(`${API_URL}/api/roles`, {
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error
+            if (!response.ok) {
+                throw new Error('Error al cargar roles');
+            }
+
+            const data = await response.json();
             setRoles(data || [])
         } catch (err: any) {
             console.error("Error fetching roles:", err)
@@ -45,12 +60,16 @@ export function useUsuarios() {
 
     const updateUsuarioRole = async (userId: string, roleId: number) => {
         try {
-            const { error } = await supabase
-                .from('perfiles')
-                .update({ role_id: roleId })
-                .eq('id', userId)
+            const response = await fetch(`${API_URL}/api/usuarios/${userId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ role_id: roleId })
+            });
 
-            if (error) throw error
+            if (!response.ok) {
+                throw new Error('Error al actualizar rol');
+            }
+
             await fetchUsuarios()
             return { success: true }
         } catch (err: any) {

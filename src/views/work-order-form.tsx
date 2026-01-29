@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWorkOrders } from '@/hooks/use-work-orders';
-import { supabase } from '@/services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { ArrowLeft, Loader2 } from 'lucide-react';
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
 
 export function WorkOrderFormView() {
     const navigate = useNavigate();
@@ -31,24 +39,28 @@ export function WorkOrderFormView() {
 
     useEffect(() => {
         const fetchResources = async () => {
-            const [eq, tec] = await Promise.all([
-                supabase
-                    .from('equipos')
-                    .select('id, nombre, codigo')
-                    .eq('estado_operativo', 'EN_OPERACION'),
+            try {
+                const [eqRes, tecRes] = await Promise.all([
+                    fetch(`${API_URL}/api/equipos?estado=EN_OPERACION`, { headers: getAuthHeaders() }),
+                    fetch(`${API_URL}/api/usuarios`, { headers: getAuthHeaders() })
+                ]);
 
-                supabase
-                    .from('perfiles')
-                    .select('id, nombre')
-                    .order('nombre')
-            ]);
-
-            if (eq.data) setEquipos(eq.data);
-            if (tec.data) setTecnicos(tec.data);
+                if (eqRes.ok) {
+                    const eqData = await eqRes.json();
+                    setEquipos(eqData || []);
+                }
+                if (tecRes.ok) {
+                    const tecData = await tecRes.json();
+                    setTecnicos(tecData || []);
+                }
+            } catch (err) {
+                console.error('Error fetching resources:', err);
+            }
         };
 
         fetchResources();
     }, []);
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

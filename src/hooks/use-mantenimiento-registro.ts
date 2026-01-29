@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { supabase } from '@/services/supabase'
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface MaintenanceData {
     equipo_id: string
@@ -12,6 +13,14 @@ export interface MaintenanceData {
     repuestos: { nombre: string; cantidad: number; unidad: string; costo_unitario: number }[]
 }
 
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
+
 export function useMantenimientoRegistro() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -21,64 +30,26 @@ export function useMantenimientoRegistro() {
             setLoading(true)
             setError(null)
 
-            // 1. Insert Mantenimiento
-            const { data: maintData, error: maintError } = await supabase
-                .from('mantenimientos')
-                .insert({
+            const response = await fetch(`${API_URL}/api/mantenimientos`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
                     equipo_id: data.equipo_id,
                     tipo_mantenimiento: data.tipo_mantenimiento,
                     descripcion: data.descripcion,
                     fecha_inicio: data.fecha_inicio,
                     fecha_fin: data.fecha_fin,
-                    costo_estimado: data.costo_estimado
+                    costo_estimado: data.costo_estimado,
+                    fallas: data.fallas,
+                    repuestos: data.repuestos
                 })
-                .select()
-                .single()
+            });
 
-            if (maintError) throw maintError
-            const mantenimientoId = maintData.id
-
-            // 2. Insert Fallas if any
-            if (data.fallas.length > 0) {
-                const { error: fallasError } = await supabase
-                    .from('fallas')
-                    .insert(
-                        data.fallas.map(f => ({
-                            ...f,
-                            mantenimiento_id: mantenimientoId
-                        }))
-                    )
-                if (fallasError) throw fallasError
+            if (!response.ok) {
+                throw new Error('Error al registrar mantenimiento');
             }
 
-            // 3. Insert Repuestos if any
-            if (data.repuestos.length > 0) {
-                const { error: repuestosError } = await supabase
-                    .from('repuestos')
-                    .insert(
-                        data.repuestos.map(r => ({
-                            ...r,
-                            mantenimiento_id: mantenimientoId
-                        }))
-                    )
-                if (repuestosError) throw repuestosError
-            }
-
-            // 4. Create Event in Timeline
-            const { error: eventError } = await supabase
-                .from('eventos_equipo')
-                .insert({
-                    equipo_id: data.equipo_id,
-                    tipo_evento: 'Mantenimiento',
-                    referencia_id: mantenimientoId,
-                    descripcion: `Mantenimiento ${data.tipo_mantenimiento}: ${data.descripcion}`,
-                    fecha: new Date().toISOString()
-                })
-            if (eventError) throw eventError
-
-            // 5. Update Equipment status if it was "Fuera de Servicio" and now it's finished? 
-            // For MVP, we'll keep it simple or allow the user to choose.
-
+            const maintData = await response.json();
             return { success: true, data: maintData }
         } catch (err: any) {
             setError(err.message)

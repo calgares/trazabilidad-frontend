@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/services/supabase'
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export function useMantenimientos() {
     const [mantenimientos, setMantenimientos] = useState<any[]>([])
@@ -10,15 +11,18 @@ export function useMantenimientos() {
         async function fetchMantenimientos() {
             try {
                 setLoading(true)
-                const { data, error } = await supabase
-                    .from('mantenimientos')
-                    .select(`
-                        *,
-                        equipos(nombre, codigo_unico)
-                    `)
-                    .order('fecha_inicio', { ascending: false })
+                const token = localStorage.getItem('auth_token');
+                const response = await fetch(`${API_URL}/api/mantenimientos`, {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : '',
+                    }
+                });
 
-                if (error) throw error
+                if (!response.ok) {
+                    throw new Error('Error al cargar mantenimientos');
+                }
+
+                const data = await response.json();
                 setMantenimientos(data || [])
             } catch (err: any) {
                 setError(err.message)

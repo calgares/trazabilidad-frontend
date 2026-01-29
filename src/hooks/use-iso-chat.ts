@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/services/supabase';
 import { useAuth } from '@/context/auth-context';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface Message {
     id: string;
@@ -15,89 +16,101 @@ export interface Session {
     created_at: string;
 }
 
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
+
 export function useIsoChat() {
     const { user } = useAuth();
     const [messages, setMessages] = useState<Message[]>([]);
     const [currentSession, setCurrentSession] = useState<string | null>(null);
     const [isTyping, setIsTyping] = useState(false);
 
-    // Fetch messages - declared first to avoid hoisting issues
     const fetchMessages = useCallback(async (sessionId: string) => {
-        const { data } = await supabase
-            .from('iso_chat_messages')
-            .select('*')
-            .eq('session_id', sessionId)
-            .order('created_at', { ascending: true });
-
-        if (data) setMessages(data);
+        try {
+            const response = await fetch(`${API_URL}/api/iso-chat/sessions/${sessionId}/messages`, {
+                headers: getAuthHeaders()
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setMessages(data || []);
+            }
+        } catch (err) {
+            console.error("Error fetching messages:", err);
+        }
     }, []);
 
     const addMessageToDb = useCallback(async (sessionId: string, role: 'user' | 'assistant', content: string) => {
-        await supabase.from('iso_chat_messages').insert({
-            session_id: sessionId,
-            role,
-            content
+        await fetch(`${API_URL}/api/iso-chat/sessions/${sessionId}/messages`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ role, content })
         });
     }, []);
 
     const createNewSession = useCallback(async () => {
         if (!user) return;
-        const { data, error: _error } = await supabase
-            .from('iso_chat_sessions')
-            .insert({ user_id: user.id, title: 'Consulta ISO' })
-            .select()
-            .single();
+        try {
+            const response = await fetch(`${API_URL}/api/iso-chat/sessions`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ user_id: user.id, title: 'Consulta ISO' })
+            });
 
-        if (data) {
-            setCurrentSession(data.id);
-            setMessages([]);
-            // Welcome message
-            addMessageToDb(data.id, 'assistant', 'Hola, soy tu Asistente ISO 55000. Analizo tus activos y normativa en tiempo real. ¿En qué puedo ayudarte?');
+            if (response.ok) {
+                const data = await response.json();
+                setCurrentSession(data.id);
+                setMessages([]);
+                addMessageToDb(data.id, 'assistant', 'Hola, soy tu Asistente ISO 55000. Analizo tus activos y normativa en tiempo real. ¿En qué puedo ayudarte?');
+            }
+        } catch (err) {
+            console.error("Error creating session:", err);
         }
     }, [user, addMessageToDb]);
 
-    // Initialize or Fetch Session
     const initSession = useCallback(async () => {
         if (!user) return;
 
-        // Check for existing recent session
-        const { data } = await supabase
-            .from('iso_chat_sessions')
-            .select('id')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1);
+        try {
+            const response = await fetch(`${API_URL}/api/iso-chat/sessions?user_id=${user.id}&limit=1`, {
+                headers: getAuthHeaders()
+            });
 
-        if (data && data.length > 0) {
-            setCurrentSession(data[0].id);
-            fetchMessages(data[0].id);
-        } else {
-            // Create new
-            createNewSession();
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    setCurrentSession(data[0].id);
+                    fetchMessages(data[0].id);
+                } else {
+                    createNewSession();
+                }
+            }
+        } catch (err) {
+            console.error("Error initializing session:", err);
         }
     }, [user, fetchMessages, createNewSession]);
 
-    // 2. Send Message logic
     const sendMessage = async (content: string) => {
         if (!currentSession || !user) return;
 
-        // Optimistic UI
         const tempId = crypto.randomUUID();
         const userMsg: Message = { id: tempId, role: 'user', content, created_at: new Date().toISOString() };
         setMessages(prev => [...prev, userMsg]);
         setIsTyping(true);
 
         try {
-            // Persist User Msg
             await addMessageToDb(currentSession, 'user', content);
 
-            // ANALYZE & RESPOND (Simple Expert System)
             setTimeout(async () => {
                 const response = generateExpertResponse(content);
                 await addMessageToDb(currentSession, 'assistant', response);
                 setIsTyping(false);
-                fetchMessages(currentSession); // Re-sync
-            }, 1000 + Math.random() * 1000); // Fake "thinking" delay
+                fetchMessages(currentSession);
+            }, 1000 + Math.random() * 1000);
 
         } catch (err) {
             console.error("Chat Error", err);
@@ -105,9 +118,6 @@ export function useIsoChat() {
         }
     };
 
-
-
-    // 3. Simple Expert Rules Engine
     const generateExpertResponse = (question: string): string => {
         const q = question.toLowerCase();
 

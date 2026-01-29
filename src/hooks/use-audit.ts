@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/services/supabase'
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface AuditLog {
     id: string;
@@ -27,36 +28,27 @@ export function useAudit() {
     const fetchLogs = useCallback(async () => {
         try {
             setLoading(true)
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/api/audit-logs`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : '',
+                }
+            });
 
-            // Fetch from the new audit_logs table
-            const { data, error, count } = await supabase
-                .from('audit_logs')
-                .select(`
-                  *,
-                  usuario:perfiles!changed_by(nombre, apellido) 
-                `, { count: 'exact' }) // Assuming perfiles is linked via changed_by. If FK is not set in DB, this might fail. 
-                // Given I didn't set explicit FK in create_security_policies.sql, I might need to fetch profiles separately 
-                // or hope Supabase infers it if naming convention works (it usually needs explicit FK).
-                // Let's assume for now I need to fetch profiles manually if the join fails, OR update the schema to add FK.
-                // Actually, simplified: I will fetch raw logs and then fetch necessary profiles.
-                .order('created_at', { ascending: false })
-                .limit(50)
+            if (!response.ok) {
+                throw new Error('Error al cargar logs');
+            }
 
-            if (error) throw error
+            const rawLogs = await response.json();
+            setTotalCount(rawLogs.length || 0);
 
-            const rawLogs = data || [];
-            setTotalCount(count || 0);
-
-            // Collect user IDs to fetch profiles if the join didn't work (or if we prefer manual)
-            // But let's try to map the rawLogs into the expanded format
             const expandedLogs: AuditLog[] = [];
 
             rawLogs.forEach((row: { id: string; table_name: string; record_id: string; action: string; old_data: Record<string, unknown> | null; new_data: Record<string, unknown> | null; changed_by: string; created_at: string; usuario?: { nombre: string; apellido: string } }) => {
                 const { id, table_name, record_id, action, old_data, new_data, changed_by, created_at, usuario } = row;
 
-                // Common base properties
                 const baseLog = {
-                    id: id, // uniqueness might be an issue if we split into multiple rows, we'll append index
+                    id: id,
                     tabla_afectada: table_name,
                     registro_id: record_id,
                     usuario_id: changed_by,
@@ -66,7 +58,6 @@ export function useAudit() {
                 };
 
                 if (action === 'UPDATE' && old_data && new_data) {
-                    // Find changed keys
                     Object.keys(new_data).forEach((key, idx) => {
                         const oldVal = JSON.stringify(old_data[key]);
                         const newVal = JSON.stringify(new_data[key]);
@@ -74,7 +65,7 @@ export function useAudit() {
                         if (oldVal !== newVal) {
                             expandedLogs.push({
                                 ...baseLog,
-                                id: `${id}-${idx}`, // Unique ID for key
+                                id: `${id}-${idx}`,
                                 campo: key,
                                 valor_anterior: String(old_data[key]),
                                 valor_nuevo: String(new_data[key])

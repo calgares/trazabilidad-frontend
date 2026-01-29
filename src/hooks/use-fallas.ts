@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface Falla {
     id: string;
@@ -13,7 +14,6 @@ export interface Falla {
     estado_falla: 'ABIERTA' | 'EN_REVISION' | 'RESUELTA';
     causa_raiz?: string | null;
     created_at?: string;
-    // Relations
     perfiles?: {
         nombre: string;
         apellido: string;
@@ -31,6 +31,14 @@ export interface Falla {
     };
 }
 
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
+
 export function useFallas(equipoId?: string) {
     const [fallas, setFallas] = useState<Falla[]>([]);
     const [loading, setLoading] = useState(true);
@@ -39,34 +47,19 @@ export function useFallas(equipoId?: string) {
     const fetchFallas = useCallback(async () => {
         try {
             setLoading(true);
-            let query = supabase
-                .from('equipo_fallas')
-                .select(`
-                    *,
-                    perfiles (
-                        nombre,
-                        apellido,
-                        email
-                    ),
-                    mantenimiento:mantenimientos (
-                        usuario:perfiles (
-                            nombre,
-                            apellido
-                        )
-                    ),
-                    equipos (
-                        nombre,
-                        codigo_unico
-                    )
-                `)
-                .order('created_at', { ascending: false });
+            const url = equipoId
+                ? `${API_URL}/api/fallas?equipo_id=${equipoId}`
+                : `${API_URL}/api/fallas`;
 
-            if (equipoId) {
-                query = query.eq('equipo_id', equipoId);
+            const response = await fetch(url, {
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al cargar fallas');
             }
 
-            const { data, error } = await query;
-            if (error) throw error;
+            const data = await response.json();
             setFallas(data as Falla[] || []);
         } catch (err: any) {
             console.error("Error al cargar fallas:", err);
@@ -84,20 +77,22 @@ export function useFallas(equipoId?: string) {
     }) => {
         try {
             setLoading(true);
-            const { error } = await supabase
-                .from('equipo_fallas')
-                .insert({
+            const response = await fetch(`${API_URL}/api/fallas`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
                     equipo_id: equipoId,
                     tipo_falla: datos.tipo_falla,
                     descripcion: datos.descripcion,
                     severidad: datos.severidad,
                     usuario_reporta: datos.usuario_id,
                     estado_falla: 'ABIERTA'
-                });
+                })
+            });
 
-            if (error) throw error;
-
-            // Trigger automatically handles equipment status update if ALTA
+            if (!response.ok) {
+                throw new Error('Error al reportar falla');
+            }
 
             await fetchFallas();
             return { success: true };
@@ -111,12 +106,16 @@ export function useFallas(equipoId?: string) {
     const actualizarEstadoFalla = async (fallaId: string, nuevoEstado: string) => {
         try {
             setLoading(true);
-            const { error } = await supabase
-                .from('equipo_fallas')
-                .update({ estado_falla: nuevoEstado })
-                .eq('id', fallaId);
+            const response = await fetch(`${API_URL}/api/fallas/${fallaId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ estado_falla: nuevoEstado })
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al actualizar falla');
+            }
+
             await fetchFallas();
             return { success: true };
         } catch (err: any) {

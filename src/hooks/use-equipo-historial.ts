@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface HistorialEstado {
     id: string;
@@ -27,21 +28,18 @@ export function useEquipoHistorial(equipoId: string) {
 
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('equipo_historial_estados')
-                .select(`
-                    *,
-                    perfiles (
-                        nombre,
-                        apellido,
-                        email
-                    )
-                `)
-                .eq('equipo_id', equipoId)
-                .order('fecha_cambio', { ascending: false });
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/api/equipos/${equipoId}/historial`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : '',
+                }
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al cargar historial');
+            }
 
+            const data = await response.json();
             setHistorial(data as HistorialEstado[] || []);
         } catch (err: any) {
             console.error("Error al cargar historial:", err);

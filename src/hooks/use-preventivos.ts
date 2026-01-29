@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/services/supabase';
 import { addDays, differenceInDays, format } from 'date-fns';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface ProgramaMantenimiento {
     id: string;
@@ -8,20 +9,28 @@ export interface ProgramaMantenimiento {
     titulo: string;
     frecuencia_tipo: 'HORAS' | 'KILOMETROS' | 'FECHA';
     frecuencia_valor: number;
-    valor_ultima_realizacion: number; // Stored as bigint in DB, treating as number for JS (careful with huge logs)
-    fecha_ultima_realizacion?: string | null; // Optional, useful for DATE types
+    valor_ultima_realizacion: number;
+    fecha_ultima_realizacion?: string | null;
     alerta_anticipacion: number;
     estado: 'ACTIVO' | 'INACTIVO';
     created_at: string;
 }
 
 export interface ProgramaEstado extends ProgramaMantenimiento {
-    proximo_valor_estimado: number | string; // Value or Date string
-    restante: number; // Units remaining
-    unidad: string; // 'Hrs', 'Km', 'Días'
+    proximo_valor_estimado: number | string;
+    restante: number;
+    unidad: string;
     estado_alerta: 'OK' | 'WARNING' | 'DANGER' | 'INACTIVE';
     porcentaje_uso: number;
 }
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
 
 export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
     const [programas, setProgramas] = useState<ProgramaEstado[]>([]);
@@ -41,40 +50,23 @@ export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
 
         if (prog.frecuencia_tipo === 'FECHA') {
             unidad = 'Días';
-            // Logic: Fecha Ultima (or CreatedAt?) + Frecuencia Days
-            // If fecha_ultima_realizacion is null, use created_at or assume overdue/now?
-            // Let's assume we store the "Start Date" in valor_ultima_realizacion as epoch or just use a dedicated date col if added.
-            // generated schema had `fecha_ultima_realizacion`.
-            // If not present, fallback to created_at
-
             const baseDate = prog.fecha_ultima_realizacion ? new Date(prog.fecha_ultima_realizacion) : new Date(prog.created_at);
             const nextDate = addDays(baseDate, prog.frecuencia_valor);
             proximo = format(nextDate, 'dd/MM/yyyy');
-
             const diff = differenceInDays(nextDate, new Date());
             restante = diff;
-
-            // Calc percentage (inverse: how much time passed vs total interval)
             const totalDays = prog.frecuencia_valor;
             const daysPassed = totalDays - restante;
             porcentaje = (daysPassed / totalDays) * 100;
-
         } else {
-            // HORAS or KILOMETROS
             unidad = prog.frecuencia_tipo === 'HORAS' ? 'Hrs' : 'Km';
             const baseValue = prog.valor_ultima_realizacion || 0;
             const nextValue = baseValue + prog.frecuencia_valor;
             proximo = nextValue;
-
             restante = nextValue - currentCounter;
-
             const used = currentCounter - baseValue;
             porcentaje = (used / prog.frecuencia_valor) * 100;
         }
-
-        // Determine Alert Status
-        // Warning if remaining < alerta_anticipacion
-        // Danger if remaining <= 0
 
         if (restante <= 0) {
             estado_alerta = 'DANGER';
@@ -90,9 +82,8 @@ export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
             restante,
             unidad,
             estado_alerta,
-            porcentaje_uso: Math.min(Math.max(porcentaje, 0), 100) // Clamp 0-100
+            porcentaje_uso: Math.min(Math.max(porcentaje, 0), 100)
         };
-
     }, []);
 
     const fetchProgramas = useCallback(async () => {
@@ -100,19 +91,17 @@ export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
 
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('mantenimiento_programas')
-                .select('*')
-                .eq('equipo_id', equipoId)
-                .order('created_at', { ascending: false });
+            const response = await fetch(`${API_URL}/api/preventivos?equipo_id=${equipoId}`, {
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al cargar programas');
+            }
 
+            const data = await response.json();
             const rawProgs = data as ProgramaMantenimiento[] || [];
-
-            // Process calculate status
             const processed = rawProgs.map(p => calcularEstado(p, lecturaActual));
-
             setProgramas(processed);
         } catch (err: any) {
             console.error("Error al cargar programas:", err);
@@ -125,19 +114,21 @@ export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
     const guardarPrograma = async (datos: Partial<ProgramaMantenimiento>) => {
         try {
             setLoading(true);
-            // If ID exists, update. Else insert.
-            if (datos.id) {
-                const { error } = await supabase
-                    .from('mantenimiento_programas')
-                    .update(datos)
-                    .eq('id', datos.id);
-                if (error) throw error;
-            } else {
-                const { error } = await supabase
-                    .from('mantenimiento_programas')
-                    .insert({ ...datos, equipo_id: equipoId }); // Ensure equipo_id is set
-                if (error) throw error;
+            const method = datos.id ? 'PUT' : 'POST';
+            const url = datos.id
+                ? `${API_URL}/api/preventivos/${datos.id}`
+                : `${API_URL}/api/preventivos`;
+
+            const response = await fetch(url, {
+                method,
+                headers: getAuthHeaders(),
+                body: JSON.stringify({ ...datos, equipo_id: equipoId })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al guardar programa');
             }
+
             await fetchProgramas();
             return { success: true };
         } catch (err: any) {
@@ -147,13 +138,9 @@ export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
         }
     };
 
-    // NEW: Function to reset a program (mark as done)
-    // This updates the 'valor_ultima_realizacion' to current counter/date
     const registrarMantenimientoRealizado = async (programaId: string, counter: number, date: Date) => {
         try {
             setLoading(true);
-
-            // Find the program to know type
             const prog = programas.find(p => p.id === programaId);
             if (!prog) throw new Error("Programa no encontrado");
 
@@ -164,12 +151,16 @@ export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
                 updates.valor_ultima_realizacion = counter;
             }
 
-            const { error } = await supabase
-                .from('mantenimiento_programas')
-                .update(updates)
-                .eq('id', programaId);
+            const response = await fetch(`${API_URL}/api/preventivos/${programaId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(updates)
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al registrar mantenimiento');
+            }
+
             await fetchProgramas();
             return { success: true };
         } catch (err: any) {
@@ -182,11 +173,15 @@ export function usePreventivos(equipoId: string, lecturaActual: number = 0) {
     const eliminarPrograma = async (id: string) => {
         try {
             setLoading(true);
-            const { error } = await supabase
-                .from('mantenimiento_programas')
-                .delete()
-                .eq('id', id);
-            if (error) throw error;
+            const response = await fetch(`${API_URL}/api/preventivos/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al eliminar programa');
+            }
+
             await fetchProgramas();
             return { success: true };
         } catch (err: any) {

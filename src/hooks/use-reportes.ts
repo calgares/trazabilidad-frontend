@@ -1,7 +1,15 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export type ReportType = 'EQUIPOS' | 'FALLAS' | 'PREVENTIVOS' | 'ASIGNACIONES';
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
 
 export function useReportes() {
     const [data, setData] = useState<any[]>([]);
@@ -11,25 +19,15 @@ export function useReportes() {
     const fetchReporte = useCallback(async (tipo: ReportType) => {
         try {
             setLoading(true);
-            let query = null;
+            const response = await fetch(`${API_URL}/api/reportes/${tipo.toLowerCase()}`, {
+                headers: getAuthHeaders()
+            });
 
-            switch (tipo) {
-                case 'EQUIPOS':
-                    query = supabase.from('view_reporte_equipos_completo').select('*');
-                    break;
-                case 'FALLAS':
-                    query = supabase.from('view_reporte_fallas_extendido').select('*').order('fecha_reporte', { ascending: false });
-                    break;
-                case 'PREVENTIVOS':
-                    query = supabase.from('view_reporte_preventivos_calc').select('*');
-                    break;
-                default:
-                    throw new Error("Tipo de reporte no válido");
+            if (!response.ok) {
+                throw new Error('Error al cargar reporte');
             }
 
-            const { data: result, error: queryError } = await query;
-
-            if (queryError) throw queryError;
+            const result = await response.json();
             setData(result || []);
         } catch (err: any) {
             console.error("Error al cargar reporte:", err);

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/services/supabase'
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface DailyHistoryRecord {
     id: string;
@@ -17,13 +18,18 @@ export function useHistorialDiario() {
     const fetchHistory = useCallback(async () => {
         try {
             setLoading(true)
-            const { data, error } = await supabase
-                .from('historial_diario_actividades')
-                .select('*')
-                .order('fecha', { ascending: false })
-                .limit(30) // Last 30 days by default
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/api/historial-diario`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : '',
+                }
+            });
 
-            if (error) throw error
+            if (!response.ok) {
+                throw new Error('Error al cargar historial');
+            }
+
+            const data = await response.json();
             setHistory(data || [])
         } catch (err: any) {
             setError(err.message)

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface AuditFinding {
     entity_id: string;
@@ -17,27 +18,22 @@ export function useIsoAudit() {
     const runAudit = useCallback(async () => {
         setLoading(true);
         try {
-            // Fetch from the 3 Real-time Views
-            const [r1, r2, r3] = await Promise.all([
-                supabase.from('view_audit_missing_maintenance_plan').select('*'),
-                supabase.from('view_audit_stale_failures').select('*'),
-                supabase.from('view_audit_ghost_assets').select('*')
-            ]);
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/api/iso-audit`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : '',
+                }
+            });
 
-            const allFindings = [
-                ...(r1.data || []),
-                ...(r2.data || []),
-                ...(r3.data || [])
-            ] as AuditFinding[];
+            if (!response.ok) {
+                throw new Error('Error al ejecutar auditoría');
+            }
 
+            const allFindings = await response.json() as AuditFinding[];
             setFindings(allFindings);
 
-            // Calculate Stats
             const critical = allFindings.filter(f => f.severity === 'CRITICAL').length;
             const major = allFindings.filter(f => f.severity === 'MAJOR').length;
-
-            // Simple Logic for Health Score
-            // Start at 100. Deduct 10 for Critical, 5 for Major, 1 for Info.
             let penalty = (critical * 10) + (major * 5) + (allFindings.length - critical - major);
             const score = Math.max(0, 100 - penalty);
 

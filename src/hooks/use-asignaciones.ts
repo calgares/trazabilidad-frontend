@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface Asignacion {
     id: string;
@@ -12,13 +13,20 @@ export interface Asignacion {
     condicion_recepcion: string | null;
     estado_al_asignar: string | null;
     created_at: string;
-    // Relations
     perfiles?: {
         nombre: string;
         apellido: string;
         email: string;
     };
 }
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
 
 export function useAsignaciones(equipoId: string) {
     const [asignaciones, setAsignaciones] = useState<Asignacion[]>([]);
@@ -31,29 +39,19 @@ export function useAsignaciones(equipoId: string) {
 
         try {
             setLoading(true);
-            // Fetch all assignments
-            const { data, error } = await supabase
-                .from('equipo_asignaciones')
-                .select(`
-                    *,
-                    perfiles (
-                        nombre,
-                        apellido,
-                        email
-                    )
-                `)
-                .eq('equipo_id', equipoId)
-                .order('fecha_asignacion', { ascending: false });
+            const response = await fetch(`${API_URL}/api/asignaciones?equipo_id=${equipoId}`, {
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al cargar asignaciones');
+            }
 
+            const data = await response.json();
             const list = data as Asignacion[] || [];
             setAsignaciones(list);
-
-            // Determine active assignment (where fecha_devolucion is null)
             const active = list.find(a => !a.fecha_devolucion);
             setAsignacionActiva(active || null);
-
         } catch (err: any) {
             console.error("Error al cargar asignaciones:", err);
             setError(err.message);
@@ -66,37 +64,21 @@ export function useAsignaciones(equipoId: string) {
         try {
             setLoading(true);
 
-            // 1. Create assignment record
-            const { error: insertError } = await supabase
-                .from('equipo_asignaciones')
-                .insert({
+            const response = await fetch(`${API_URL}/api/asignaciones`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
                     equipo_id: equipoId,
                     responsable_id: datos.responsable_id,
                     proyecto: datos.proyecto,
                     condicion_entrega: datos.condicion_entrega,
-                    estado_al_asignar: 'DISPONIBLE' // Assumption, or passed as arg
-                });
-
-            if (insertError) throw insertError;
-
-            // 2. Update equipment status to 'EN_OPERACION'
-            // NOTE: The user requested triggers/functions might handle this, but explicit update is safer unless confirmed.
-            // The prompt said "DB: SQL Functions/Triggers for state management" was done, but I didn't verify the trigger code.
-            // I will err on side of updating it explicitly from frontend for immediate feedback, 
-            // OR if the trigger `tr_historial_estados_equipos` is strictly for history logging, 
-            // we typically still update the `equipos` table manually or via RPC.
-            // Since the user said "Reglas de negocio: Al asignar... debe cambiar estado", 
-            // I'll update the equipment status directly here.
-
-            const { error: updateError } = await supabase
-                .from('equipos')
-                .update({
-                    estado_operativo: 'EN_OPERACION',
-                    motivo_estado: `Asignado a proyecto: ${datos.proyecto || 'Sin proyecto'}`
+                    estado_al_asignar: 'DISPONIBLE'
                 })
-                .eq('id', equipoId);
+            });
 
-            if (updateError) throw updateError;
+            if (!response.ok) {
+                throw new Error('Error al asignar equipo');
+            }
 
             await fetchAsignaciones();
             return { success: true };
@@ -113,27 +95,20 @@ export function useAsignaciones(equipoId: string) {
         try {
             setLoading(true);
 
-            // 1. Update assignment record (close it)
-            const { error: updateAsigError } = await supabase
-                .from('equipo_asignaciones')
-                .update({
-                    fecha_devolucion: new Date().toISOString(),
-                    condicion_recepcion: datos.condicion_recepcion
+            const response = await fetch(`${API_URL}/api/asignaciones/${asignacionActiva.id}/devolver`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify({
+                    condicion_recepcion: datos.condicion_recepcion,
+                    nuevo_estado: datos.nuevo_estado,
+                    motivo_cambio: datos.motivo_cambio,
+                    equipo_id: equipoId
                 })
-                .eq('id', asignacionActiva.id);
+            });
 
-            if (updateAsigError) throw updateAsigError;
-
-            // 2. Update equipment status
-            const { error: updateEquipoError } = await supabase
-                .from('equipos')
-                .update({
-                    estado_operativo: datos.nuevo_estado,
-                    motivo_estado: datos.motivo_cambio || 'Devolución de equipo'
-                })
-                .eq('id', equipoId);
-
-            if (updateEquipoError) throw updateEquipoError;
+            if (!response.ok) {
+                throw new Error('Error al devolver equipo');
+            }
 
             await fetchAsignaciones();
             return { success: true };

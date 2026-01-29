@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/services/supabase';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface SystemHealth {
     dashboard_view_ok: boolean;
@@ -21,12 +22,18 @@ export function useSystemHealth() {
         setLoading(true);
         setError(null);
         try {
-            const { data, error } = await supabase
-                .from('view_system_health')
-                .select('*')
-                .single();
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/api/system/health`, {
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : '',
+                }
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al cargar diagnóstico');
+            }
+
+            const data = await response.json();
             setHealth(data);
         } catch (err: any) {
             console.error('Error fetching system health:', err);

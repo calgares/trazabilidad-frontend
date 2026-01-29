@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/services/supabase';
-import { v4 as uuidv4 } from 'uuid';
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
 export interface WorkOrderEvidence {
     id: string;
@@ -11,6 +11,13 @@ export interface WorkOrderEvidence {
     created_at: string;
 }
 
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('auth_token');
+    return {
+        'Authorization': token ? `Bearer ${token}` : '',
+    };
+};
+
 export function useWorkOrderEvidences() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -18,13 +25,15 @@ export function useWorkOrderEvidences() {
     const listEvidences = useCallback(async (workOrderId: string) => {
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('work_order_evidences')
-                .select('*')
-                .eq('work_order_id', workOrderId)
-                .order('created_at', { ascending: false });
+            const response = await fetch(`${API_URL}/api/work-orders/${workOrderId}/evidences`, {
+                headers: getAuthHeaders()
+            });
 
-            if (error) throw error;
+            if (!response.ok) {
+                throw new Error('Error al cargar evidencias');
+            }
+
+            const data = await response.json();
             return data as WorkOrderEvidence[];
         } catch (err: any) {
             setError(err.message);
@@ -43,39 +52,25 @@ export function useWorkOrderEvidences() {
         setLoading(true);
         setError(null);
         try {
-            // 1. Upload file to Storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${workOrderId}/${uuidv4()}.${fileExt}`;
-            const filePath = fileName;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('tipo', tipo);
+            if (comment) formData.append('comentario', comment);
 
-            // Ensure bucket exists or handle error (assuming bucket 'ot-evidences' exists as per prompt instructions)
-            // We upload to 'ot-evidences' bucket
-            const { error: uploadError } = await supabase.storage
-                .from('ot-evidences')
-                .upload(filePath, file);
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/api/work-orders/${workOrderId}/evidences`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : '',
+                },
+                body: formData
+            });
 
-            if (uploadError) throw uploadError;
+            if (!response.ok) {
+                throw new Error('Error al subir evidencia');
+            }
 
-            // 2. Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('ot-evidences')
-                .getPublicUrl(filePath);
-
-            // 3. Save record in DB
-            const { data, error: dbError } = await supabase
-                .from('work_order_evidences')
-                .insert({
-                    work_order_id: workOrderId,
-                    tipo: tipo,
-                    url_archivo: publicUrl,
-                    comentario: comment || file.name
-                })
-                .select()
-                .single();
-
-            if (dbError) throw dbError;
-            return data;
-
+            return await response.json();
         } catch (err: any) {
             console.error('Upload error:', err);
             setError(err.message || "Error al subir evidencia");
@@ -88,30 +83,14 @@ export function useWorkOrderEvidences() {
     const deleteEvidence = async (evidence: WorkOrderEvidence) => {
         setLoading(true);
         try {
-            // 1. Try to delete from storage if it has a URL
-            if (evidence.url_archivo) {
-                // Extract path from URL. Assuming standard Supabase Storage URL structure.
-                // .../storage/v1/object/public/ot-evidences/FOLDER/FILE
-                const urlObj = new URL(evidence.url_archivo);
-                const pathParts = urlObj.pathname.split('/ot-evidences/');
-                if (pathParts.length > 1) {
-                    const filePath = pathParts[1]; // decoded path
-                    const { error: storageError } = await supabase.storage
-                        .from('ot-evidences')
-                        .remove([decodeURIComponent(filePath)]);
+            const response = await fetch(`${API_URL}/api/work-orders/evidences/${evidence.id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
 
-                    if (storageError) console.warn("Storage delete warning:", storageError);
-                }
+            if (!response.ok) {
+                throw new Error('Error al eliminar evidencia');
             }
-
-            // 2. Delete from DB
-            const { error } = await supabase
-                .from('work_order_evidences')
-                .delete()
-                .eq('id', evidence.id);
-
-            if (error) throw error;
-
         } catch (err: any) {
             setError(err.message);
             throw err;
@@ -123,14 +102,22 @@ export function useWorkOrderEvidences() {
     const addComment = async (workOrderId: string, comment: string) => {
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('work_order_evidences')
-                .insert({
-                    work_order_id: workOrderId,
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_URL}/api/work-orders/${workOrderId}/evidences`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                },
+                body: JSON.stringify({
                     tipo: 'COMENTARIO',
                     comentario: comment
-                });
-            if (error) throw error;
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al agregar comentario');
+            }
         } catch (err: any) {
             setError(err.message);
             throw err;
