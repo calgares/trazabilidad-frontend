@@ -35,6 +35,7 @@ interface AuthContextType {
     loading: boolean;
     signIn: (email: string, password: string) => Promise<{ error?: string }>;
     signOut: () => Promise<void>;
+    getAuthHeaders: () => HeadersInit;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -44,6 +45,7 @@ const AuthContext = createContext<AuthContextType>({
     loading: true,
     signIn: async () => ({ error: 'Not implemented' }),
     signOut: async () => { },
+    getAuthHeaders: () => ({}),
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -138,6 +140,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    const getAuthHeaders = (): HeadersInit => {
+        const token = localStorage.getItem('auth_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -147,6 +154,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 loading,
                 signIn,
                 signOut,
+                getAuthHeaders,
             }}
         >
             {children}
