@@ -11,7 +11,7 @@ export interface Equipo {
     tipo_equipo_id: string;
     ubicacion_id: string;
     estado: string;
-    estado_operativo: EstadoOperativo;
+    estado_operativo: string; // Permitir cualquier valor de string para manejar "Operativo", "Falla Reportada", etc.
     fecha_cambio_estado?: string;
     motivo_estado?: string;
     imagen_url?: string;
@@ -47,6 +47,7 @@ export function useEquipos(page = 1, pageSize = 10) {
             // Mapear datos para compatibilidad con el formato anterior
             const mappedData = data.map((eq: Equipo) => ({
                 ...eq,
+                estado_operativo: eq.estado, // Mapear estado de BD a propiedad esperada por UI
                 tipos_equipo: { nombre: eq.tipo_equipo_nombre || '' },
                 ubicaciones: { nombre: eq.ubicacion_nombre || '', area_id: '' }
             }));
