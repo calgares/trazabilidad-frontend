@@ -21,13 +21,30 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+import { useState } from "react";
+import { UsuarioForm } from "@/components/layout/UsuarioForm";
+
 export function UsuariosList() {
-    const { usuarios, roles, loading, error, updateUsuarioRole } = useUsuarios();
+    const { usuarios, roles, loading, error, updateUsuarioRole, createUsuario } = useUsuarios();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [creating, setCreating] = useState(false);
 
     const handleRoleChange = async (userId: string, roleId: string) => {
         const result = await updateUsuarioRole(userId, parseInt(roleId));
         if (!result.success) {
             alert("Error al actualizar el rol: " + result.error);
+        }
+    };
+
+    const handleCreateUsuario = async (data: any) => {
+        setCreating(true);
+        const result = await createUsuario(data);
+        setCreating(false);
+
+        if (result.success) {
+            setIsModalOpen(false);
+        } else {
+            alert("Error al crear usuario: " + result.error);
         }
     };
 
@@ -55,10 +72,18 @@ export function UsuariosList() {
                     <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Gestión de Personal</h2>
                     <p className="text-slate-500 dark:text-slate-400">Administre los accesos y roles de los integrantes de la planta.</p>
                 </div>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsModalOpen(true)}>
                     <UserPlus className="mr-2 h-4 w-4" /> Nuevo Usuario
                 </Button>
             </div>
+
+            <UsuarioForm
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleCreateUsuario}
+                loading={creating}
+                roles={roles}
+            />
 
             <Card className="border-slate-200 dark:border-slate-800">
                 <CardContent className="p-0">

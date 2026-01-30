@@ -77,12 +77,34 @@ export function useUsuarios() {
         }
     }
 
+    const createUsuario = async (data: any) => {
+        try {
+            const response = await fetch(`${API_URL}/api/usuarios`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Error al crear usuario');
+            }
+
+            await fetchUsuarios();
+            return { success: true };
+        } catch (err: any) {
+            return { success: false, error: err.message };
+        }
+    };
+
     return {
         usuarios,
         roles,
         loading,
         error,
         refresh: fetchUsuarios,
-        updateUsuarioRole
+        updateUsuarioRole,
+        createUsuario
     }
 }
