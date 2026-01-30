@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom
 import { ThemeProvider } from "@/context/theme-provider";
 import { AuthProvider } from "@/context/auth-context";
 import { Layout } from "@/components/layout/Layout";
+import { RequireAuth } from "@/components/layout/RequireAuth";
 
 import { Login } from "@/views/login";
 import { EquiposList } from "@/views/equipos-list";
@@ -32,39 +33,40 @@ function App() {
 
             <Route path="/login" element={<Login />} />
 
-            <Route
-              element={
-                <Layout>
-                  <Outlet />
-                </Layout>
-              }
-            >
+            <Route element={<RequireAuth />}>
+              <Route
+                element={
+                  <Layout>
+                    <Outlet />
+                  </Layout>
+                }
+              >
+                <Route path="/" element={<DashboardView />} />
 
-              <Route path="/" element={<DashboardView />} />
+                <Route path="/equipos" element={<EquiposList />} />
+                <Route path="/equipos/:id" element={<EquipoDetalle />} />
 
-              <Route path="/equipos" element={<EquiposList />} />
-              <Route path="/equipos/:id" element={<EquipoDetalle />} />
+                <Route path="/mantenimientos" element={<MantenimientosList />} />
 
-              <Route path="/mantenimientos" element={<MantenimientosList />} />
+                <Route path="/work-orders" element={<WorkOrdersListView />} />
+                <Route path="/work-orders/new" element={<WorkOrderFormView />} />
+                <Route path="/work-orders/:id" element={<WorkOrderDetailView />} />
 
-              <Route path="/work-orders" element={<WorkOrdersListView />} />
-              <Route path="/work-orders/new" element={<WorkOrderFormView />} />
-              <Route path="/work-orders/:id" element={<WorkOrderDetailView />} />
+                <Route path="/fallas" element={<ReportesView />} />
+                <Route path="/reportes" element={<ReportesView />} />
 
-              <Route path="/fallas" element={<ReportesView />} />
-              <Route path="/reportes" element={<ReportesView />} />
+                <Route path="/historial-diario" element={<HistorialDiario />} />
 
-              <Route path="/historial-diario" element={<HistorialDiario />} />
+                <Route path="/ayuda" element={<HelpCenterView />} />
+                <Route path="/asistente-iso" element={<IsoAssistantView />} />
+                <Route path="/system-health" element={<SystemHealthView />} />
+                <Route path="/configuracion" element={<ConfiguracionView />} />
 
-              <Route path="/ayuda" element={<HelpCenterView />} />
-              <Route path="/asistente-iso" element={<IsoAssistantView />} />
-              <Route path="/system-health" element={<SystemHealthView />} />
-              <Route path="/configuracion" element={<ConfiguracionView />} />
+                <Route path="/auditoria" element={<AuditoriaList />} />
+                <Route path="/pruebas-sistema" element={<SystemTestsView />} />
+                <Route path="/usuarios" element={<UsuariosList />} />
 
-              <Route path="/auditoria" element={<AuditoriaList />} />
-              <Route path="/pruebas-sistema" element={<SystemTestsView />} />
-              <Route path="/usuarios" element={<UsuariosList />} />
-
+              </Route>
             </Route>
 
           </Routes>
