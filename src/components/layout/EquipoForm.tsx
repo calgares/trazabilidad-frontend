@@ -45,16 +45,23 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
     // New Type Modal State
     const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
     const [newTypeName, setNewTypeName] = useState("");
+    const [newTypeCategory, setNewTypeCategory] = useState("");
     const [creatingType, setCreatingType] = useState(false);
 
     const handleCreateType = async () => {
-        if (!newTypeName.trim()) return;
+        if (!newTypeName.trim() || !newTypeCategory) return;
         setCreatingType(true);
         // Assuming createItem is available from useCatalogos destructuring
-        const result = await createItem('tipos_equipo', { nombre: newTypeName });
+        const result = await createItem('tipos_equipo', {
+            nombre: newTypeName,
+            categoria_operativa: newTypeCategory
+        });
         if (result.success) {
             setIsTypeModalOpen(false);
             setNewTypeName("");
+            setNewTypeCategory("");
+        } else {
+            alert("Error al crear tipo: " + result.error);
         }
         setCreatingType(false);
     };
@@ -289,24 +296,35 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
                             Crear una nueva categoría para clasificar equipos.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="newTypeName" className="mb-2 block">Nombre del Tipo</Label>
-                        <Input
-                            id="newTypeName"
-                            value={newTypeName}
-                            onChange={(e) => setNewTypeName(e.target.value)}
-                            placeholder="Ej. Torno, Fresadora..."
-                            autoFocus
+                    placeholder="Ej. Torno, Fresadora..."
+                    autoFocus
                         />
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
-                        <Button type="button" onClick={handleCreateType} disabled={creatingType}>
-                            {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                </div>
+                <div className="pb-4">
+                    <Label htmlFor="newTypeCategory" className="mb-2 block">Categoría Operativa</Label>
+                    <Select
+                        value={newTypeCategory}
+                        onValueChange={setNewTypeCategory}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccione categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="MAQUINARIA_PESADA">Maquinaria Pesada</SelectItem>
+                            <SelectItem value="EQUIPO_MOTORIZADO">Equipo Motorizado</SelectItem>
+                            <SelectItem value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</SelectItem>
+                            <SelectItem value="HERRAMIENTA_MENOR">Herramienta Menor</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
+                    <Button type="button" onClick={handleCreateType} disabled={creatingType}>
+                        {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
         </Dialog>
+        </Dialog >
     );
 }
