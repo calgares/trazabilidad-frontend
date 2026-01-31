@@ -41,6 +41,7 @@ export function EquiposList() {
     // Type Modal State
     const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
     const [newType, setNewType] = useState("");
+    const [newCategory, setNewCategory] = useState("");
     const [creatingType, setCreatingType] = useState(false);
 
     const handleSave = async (data: any) => {
@@ -54,12 +55,16 @@ export function EquiposList() {
     };
 
     const handleCreateType = async () => {
-        if (!newType.trim()) return;
+        if (!newType.trim() || !newCategory) return;
         setCreatingType(true);
-        const result = await createItem('tipos_equipo', { nombre: newType });
+        const result = await createItem('tipos_equipo', {
+            nombre: newType,
+            categoria_operativa: newCategory
+        });
         if (result.success) {
             setIsTypeModalOpen(false);
             setNewType("");
+            setNewCategory("");
             // Optionally we could refresh catalogs context if we had one global, 
             // but usually this is enough if the form re-fetches or validation passes
             // To be safe, we just close. The main Equipos list doesn't show types list directly so no refresh needed here technically,
@@ -165,10 +170,10 @@ export function EquiposList() {
                                             <TableCell className="text-center">
                                                 <Badge className={cn(
                                                     "px-2.5 py-0.5 rounded-full text-xs font-semibold shadow-sm",
-                                                    (equipo.estado_operativo === 'DISPONIBLE' || equipo.estado_operativo === 'Disponible') ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800' :
-                                                        (equipo.estado_operativo === 'EN_OPERACION' || equipo.estado_operativo === 'Operativo' || equipo.estado_operativo === 'En Operación') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800' :
-                                                            (equipo.estado_operativo === 'EN_MANTENIMIENTO' || equipo.estado_operativo === 'En Mantenimiento') ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800' :
-                                                                (equipo.estado_operativo === 'FUERA_DE_SERVICIO' || equipo.estado_operativo === 'Falla Reportada') ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800' :
+                                                    equipo.estado_operativo === 'DISPONIBLE' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800' :
+                                                        equipo.estado_operativo === 'EN_OPERACION' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800' :
+                                                            equipo.estado_operativo === 'EN_MANTENIMIENTO' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800' :
+                                                                equipo.estado_operativo === 'FUERA_DE_SERVICIO' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800' :
                                                                     'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                                                 )}>
                                                     {equipo.estado_operativo?.replace(/_/g, ' ') || 'SIN ESTADO'}
@@ -235,21 +240,38 @@ export function EquiposList() {
                     <DialogHeader>
                         <DialogTitle>Agregar Tipo de Equipo</DialogTitle>
                         <DialogDescription>
-                            Introduce el nombre del nuevo tipo o categoría de equipo.
+                            Introduce el nombre y categoría operativa del nuevo tipo.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="nombreTipo" className="mb-2 block">Nombre</Label>
-                        <Input
-                            id="nombreTipo"
-                            value={newType}
-                            onChange={(e) => setNewType(e.target.value)}
-                            placeholder="Ej. Torno CNC, Compresor..."
-                        />
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="nombreTipo">Nombre del Tipo</Label>
+                            <Input
+                                id="nombreTipo"
+                                value={newType}
+                                onChange={(e) => setNewType(e.target.value)}
+                                placeholder="Ej. Torno CNC, Compresor..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="categoriaTipo">Categoría Operativa</Label>
+                            <select
+                                id="categoriaTipo"
+                                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-800 dark:bg-slate-950 dark:ring-offset-slate-950 dark:placeholder:text-slate-400 dark:focus-visible:ring-slate-300"
+                                value={newCategory}
+                                onChange={(e) => setNewCategory(e.target.value)}
+                            >
+                                <option value="" disabled>Seleccione una categoría</option>
+                                <option value="MAQUINARIA_PESADA">Maquinaria Pesada</option>
+                                <option value="EQUIPO_MOTORIZADO">Equipo Motorizado</option>
+                                <option value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</option>
+                                <option value="HERRAMIENTA_MENOR">Herramienta Menor</option>
+                            </select>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleCreateType} disabled={creatingType}>
+                        <Button onClick={handleCreateType} disabled={creatingType || !newType || !newCategory}>
                             {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Tipo"}
                         </Button>
                     </DialogFooter>

@@ -72,11 +72,39 @@ export function useCatalogos() {
         fetchCatalogos()
     }, [fetchCatalogos])
 
-    // CRUD helpers (temporalmente deshabilitados - la API no soporta estos endpoints aún)
-    const createItem = useCallback(async (_table: string, _data: unknown) => {
-        console.warn('createItem no implementado en la API aún');
-        return { success: false, error: 'No implementado' };
-    }, [])
+    // CRUD helpers
+    const createItem = useCallback(async (table: string, data: any) => {
+        try {
+            let endpoint = '';
+            if (table === 'tipos_equipo') endpoint = '/api/catalogos/tipos-equipo';
+            else throw new Error(`Tabla ${table} no soportada para creación`);
+
+            const token = localStorage.getItem('auth_token');
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json'
+            };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const res = await fetch(`${API_URL}${endpoint}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(data)
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                return { success: false, error: errData.error || 'Error al crear item' };
+            }
+
+            // Refresh catalogs
+            fetchCatalogos();
+            return { success: true };
+
+        } catch (error: any) {
+            console.error('Error creating item:', error);
+            return { success: false, error: error.message };
+        }
+    }, [fetchCatalogos])
 
     const updateItem = useCallback(async (_table: string, _id: string, _data: unknown) => {
         console.warn('updateItem no implementado en la API aún');
