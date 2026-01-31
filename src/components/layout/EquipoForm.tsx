@@ -296,35 +296,43 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
                             Crear una nueva categoría para clasificar equipos.
                         </DialogDescription>
                     </DialogHeader>
-                    placeholder="Ej. Torno, Fresadora..."
-                    autoFocus
-                        />
-                </div>
-                <div className="pb-4">
-                    <Label htmlFor="newTypeCategory" className="mb-2 block">Categoría Operativa</Label>
-                    <Select
-                        value={newTypeCategory}
-                        onValueChange={setNewTypeCategory}
-                    >
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Seleccione categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="MAQUINARIA_PESADA">Maquinaria Pesada</SelectItem>
-                            <SelectItem value="EQUIPO_MOTORIZADO">Equipo Motorizado</SelectItem>
-                            <SelectItem value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</SelectItem>
-                            <SelectItem value="HERRAMIENTA_MENOR">Herramienta Menor</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
-                    <Button type="button" onClick={handleCreateType} disabled={creatingType}>
-                        {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
+                    <div className="py-4 space-y-4">
+                        <div>
+                            <Label htmlFor="newTypeName" className="mb-2 block">Nombre del Tipo</Label>
+                            <Input
+                                id="newTypeName"
+                                value={newTypeName}
+                                onChange={(e) => setNewTypeName(e.target.value)}
+                                placeholder="Ej. Torno, Fresadora..."
+                                autoFocus
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="newTypeCategory" className="mb-2 block">Categoría Operativa</Label>
+                            <Select
+                                value={newTypeCategory}
+                                onValueChange={setNewTypeCategory}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Seleccione categoría" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="MAQUINARIA_PESADA">Maquinaria Pesada</SelectItem>
+                                    <SelectItem value="EQUIPO_MOTORIZADO">Equipo Motorizado</SelectItem>
+                                    <SelectItem value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</SelectItem>
+                                    <SelectItem value="HERRAMIENTA_MENOR">Herramienta Menor</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
+                        <Button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim() || !newTypeCategory}>
+                            {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Dialog>
-        </Dialog >
     );
 }
