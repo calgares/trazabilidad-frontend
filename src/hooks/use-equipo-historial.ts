@@ -11,11 +11,9 @@ export interface HistorialEstado {
     fecha_cambio: string;
     usuario_id: string | null;
     created_at: string;
-    perfiles?: {
-        nombre: string;
-        apellido: string;
-        email: string;
-    };
+    usuario_nombre?: string;
+    usuario_apellido?: string;
+    usuario_email?: string;
 }
 
 export function useEquipoHistorial(equipoId: string) {

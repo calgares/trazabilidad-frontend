@@ -66,9 +66,9 @@ export function HistorialTable({ equipoId }: HistorialTableProps) {
                                 {h.motivo || <span className="text-slate-400 italic">Sin motivo especificado</span>}
                             </TableCell>
                             <TableCell className="text-right text-sm">
-                                {h.perfiles ? (
+                                {h.usuario_nombre ? (
                                     <span className="font-medium text-slate-700 dark:text-slate-300">
-                                        {h.perfiles.nombre} {h.perfiles.apellido}
+                                        {h.usuario_nombre} {h.usuario_apellido}
                                     </span>
                                 ) : (
                                     <span className="italic text-slate-400">Sistema</span>
