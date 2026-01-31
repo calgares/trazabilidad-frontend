@@ -104,8 +104,8 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
         e.preventDefault();
         await onSave({
             ...formData,
-            tipo_equipo_id: parseInt(formData.tipo_equipo_id),
-            ubicacion_id: parseInt(formData.ubicacion_id)
+            tipo_equipo_id: formData.tipo_equipo_id,
+            ubicacion_id: formData.ubicacion_id
         });
     };
 
