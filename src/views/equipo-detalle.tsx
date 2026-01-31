@@ -78,6 +78,7 @@ export function EquipoDetalle() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isQRModalOpen, setIsQRModalOpen] = useState(false);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("ficha");
 
     const handleEdit = async (data: Record<string, unknown>) => {
         const result = await updateEquipo(id!, data);
@@ -140,7 +141,7 @@ export function EquipoDetalle() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                    <Tabs defaultValue="ficha" className="w-full">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                         <TabsList className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                             <TabsTrigger value="ficha" className="gap-2">
                                 <FileText className="h-4 w-4" /> Ficha Técnica
@@ -330,10 +331,10 @@ export function EquipoDetalle() {
                             <CardTitle className="text-sm font-semibold uppercase tracking-wider text-slate-500">Acciones Rápidas</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                            <Button variant="outline" className="w-full justify-start text-xs h-9">
+                            <Button variant="outline" className="w-full justify-start text-xs h-9" onClick={() => window.print()}>
                                 <FileText className="mr-2 h-4 w-4" /> Generar Reporte PDF
                             </Button>
-                            <Button variant="outline" className="w-full justify-start text-xs h-9">
+                            <Button variant="outline" className="w-full justify-start text-xs h-9" onClick={() => setActiveTab("timeline")}>
                                 <History className="mr-2 h-4 w-4" /> Ver Historial Completo
                             </Button>
                             <Button
