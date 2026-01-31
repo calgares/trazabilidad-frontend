@@ -66,7 +66,8 @@ import {
     FallasPanel,
     HistorialTable,
     PreventivosPanel,
-    WorkOrdersPanel
+    WorkOrdersPanel,
+    RepuestosPanel
 } from "./equipo-detalle-panels";
 
 export function EquipoDetalle() {
@@ -273,15 +274,7 @@ export function EquipoDetalle() {
                         </TabsContent>
 
                         <TabsContent value="repuestos" className="mt-6">
-                            <Card className="border-slate-200 dark:border-slate-800">
-                                <CardContent className="pt-6">
-                                    <div className="text-center py-12">
-                                        <Settings className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-                                        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Control de Repuestos</h3>
-                                        <p className="text-sm text-slate-500 max-w-xs mx-auto mt-2">Próximamente: Visualización y gestión de stock de repuestos utilizados en este equipo.</p>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                            <RepuestosPanel equipoId={id!} />
                         </TabsContent>
 
                         <TabsContent value="preventivos" className="mt-6">
