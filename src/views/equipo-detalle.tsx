@@ -31,10 +31,22 @@ import {
     Trash2,
     CalendarClock,
     Briefcase,
+    Briefcase,
     ClipboardList,
+    QrCode,
+    Printer,
 } from "lucide-react";
 import { useState } from "react";
+import QRCode from "react-qr-code";
 import { EquipoForm } from "@/components/layout/EquipoForm";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter
+} from "@/components/ui/dialog";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -65,6 +77,7 @@ export function EquipoDetalle() {
     const { updateEquipo, deleteEquipo, loading: saving } = useEquiposActions();
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isQRModalOpen, setIsQRModalOpen] = useState(false);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
     const handleEdit = async (data: Record<string, unknown>) => {
@@ -324,6 +337,13 @@ export function EquipoDetalle() {
                             <Button variant="outline" className="w-full justify-start text-xs h-9">
                                 <History className="mr-2 h-4 w-4" /> Ver Historial Completo
                             </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start text-xs h-9 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 mt-2 text-blue-600 dark:text-blue-400 font-medium"
+                                onClick={() => setIsQRModalOpen(true)}
+                            >
+                                <QrCode className="mr-2 h-4 w-4" /> Generar Código QR
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -336,6 +356,38 @@ export function EquipoDetalle() {
                 initialData={equipo}
                 loading={saving}
             />
+
+            <Dialog open={isQRModalOpen} onOpenChange={setIsQRModalOpen}>
+                <DialogContent className="sm:max-w-md border-slate-200 dark:border-slate-800">
+                    <DialogHeader>
+                        <DialogTitle className="text-center text-xl">Código QR de Identificación</DialogTitle>
+                        <DialogDescription className="text-center">
+                            Escanea este código para acceder rápidamente a la ficha técnica de este equipo.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col items-center justify-center p-6 space-y-4">
+                        <div className="p-4 bg-white rounded-xl shadow-sm border border-slate-200">
+                            <QRCode
+                                value={window.location.href}
+                                size={200}
+                                level="H"
+                            />
+                        </div>
+                        <div className="text-center space-y-1">
+                            <p className="font-mono font-bold text-lg text-slate-900 dark:text-slate-100">{equipo.codigo_unico}</p>
+                            <p className="text-sm text-slate-500">{equipo.nombre}</p>
+                        </div>
+                    </div>
+                    <DialogFooter className="sm:justify-center">
+                        <Button type="button" variant="secondary" onClick={() => window.print()}>
+                            <Printer className="mr-2 h-4 w-4" /> Imprimir Etiqueta
+                        </Button>
+                        <Button type="button" onClick={() => setIsQRModalOpen(false)}>
+                            Cerrar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
                 <AlertDialogContent className="border-slate-200 dark:border-slate-800">
