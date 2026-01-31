@@ -96,9 +96,11 @@ export function useCatalogos() {
                 return { success: false, error: errData.error || 'Error al crear item' };
             }
 
+
+            const resultData = await res.json();
             // Refresh catalogs
             fetchCatalogos();
-            return { success: true };
+            return { success: true, data: resultData };
 
         } catch (error: any) {
             console.error('Error creating item:', error);

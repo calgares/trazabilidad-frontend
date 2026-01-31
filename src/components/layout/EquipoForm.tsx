@@ -60,6 +60,10 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
             setIsTypeModalOpen(false);
             setNewTypeName("");
             setNewTypeCategory("");
+            // Auto-select the new type
+            if (result.data && result.data.id) {
+                setFormData(prev => ({ ...prev, tipo_equipo_id: result.data.id.toString() }));
+            }
         } else {
             alert("Error al crear tipo: " + result.error);
         }
