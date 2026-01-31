@@ -179,7 +179,7 @@ export function AsignacionesPanel({ equipoId, estadoActual, onRefresh }: Asignac
                             ) : (
                                 <Dialog open={isAssignModalOpen} onOpenChange={setIsAssignModalOpen}>
                                     <DialogTrigger asChild>
-                                        <Button className="bg-blue-600 hover:bg-blue-700" disabled={estadoActual !== 'DISPONIBLE'}>
+                                        <Button className="bg-blue-600 hover:bg-blue-700">
                                             <UserPlus className="mr-2 h-4 w-4" /> Asignar Equipo
                                         </Button>
                                     </DialogTrigger>
