@@ -14,6 +14,11 @@ export interface Falla {
     estado_falla: 'ABIERTA' | 'EN_REVISION' | 'RESUELTA';
     causa_raiz?: string | null;
     created_at?: string;
+    // Flat fields from backend
+    usuario_nombre?: string;
+    usuario_apellido?: string;
+    usuario_email?: string;
+    // Legacy nested object (kept for compatibility if needed)
     perfiles?: {
         nombre: string;
         apellido: string;

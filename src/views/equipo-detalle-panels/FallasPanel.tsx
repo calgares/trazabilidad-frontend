@@ -232,7 +232,11 @@ export function FallasPanel({ equipoId, onRefresh }: FallasPanelProps) {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-sm text-slate-600 dark:text-slate-400">
-                                        {f.perfiles?.nombre} {f.perfiles?.apellido}
+                                        {f.usuario_nombre ? (
+                                            `${f.usuario_nombre} ${f.usuario_apellido}`
+                                        ) : (
+                                            f.perfiles?.nombre ? `${f.perfiles.nombre} ${f.perfiles.apellido}` : '---'
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {f.estado_falla !== 'RESUELTA' && (
