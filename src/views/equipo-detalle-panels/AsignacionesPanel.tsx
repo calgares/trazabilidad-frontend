@@ -44,11 +44,10 @@ import { cn } from "@/lib/utils";
 
 interface AsignacionesPanelProps {
     equipoId: string;
-    estadoActual: string;
     onRefresh: () => void;
 }
 
-export function AsignacionesPanel({ equipoId, estadoActual, onRefresh }: AsignacionesPanelProps) {
+export function AsignacionesPanel({ equipoId, onRefresh }: AsignacionesPanelProps) {
     const { asignaciones, asignacionActiva, loading, error, refresh: refreshAsignaciones, asignarEquipo, devolverEquipo } = useAsignaciones(equipoId);
     const { usuarios } = useUsuarios();
 

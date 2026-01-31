@@ -265,7 +265,7 @@ export function EquipoDetalle() {
                         </TabsContent>
 
                         <TabsContent value="asignaciones" className="mt-6">
-                            <AsignacionesPanel equipoId={id!} estadoActual={equipo.estado} onRefresh={refresh} />
+                            <AsignacionesPanel equipoId={id!} onRefresh={refresh} />
                         </TabsContent>
 
                         <TabsContent value="fallas" className="mt-6">
