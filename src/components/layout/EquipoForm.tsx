@@ -72,13 +72,19 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
 
     useEffect(() => {
         if (initialData) {
+            // Determine operational status: prefer explicit field, fallback to mapping 'estado' text
+            let opStatus = initialData.estado_operativo || 'DISPONIBLE';
+            if (initialData.estado === 'Falla Reportada') opStatus = 'FALLA_REPORTADA';
+            if (initialData.estado === 'En Mantenimiento') opStatus = 'EN_MANTENIMIENTO';
+            if (initialData.estado === 'Operativo' && opStatus === 'DISPONIBLE') opStatus = 'DISPONIBLE'; // Keep consistent
+
             setFormData({
                 nombre: initialData.nombre || '',
                 codigo_unico: initialData.codigo_unico || '',
                 tipo_equipo_id: initialData.tipo_equipo_id?.toString() || '',
                 ubicacion_id: initialData.ubicacion_id?.toString() || '',
-                estado_operativo: initialData.estado_operativo || 'DISPONIBLE',
-                motivo_estado: initialData.motivo_estado || '', // Start empty or keep previous? Usually new reason for new change.
+                estado_operativo: opStatus,
+                motivo_estado: initialData.motivo_estado || '',
                 tipo_contador: initialData.tipo_contador || '',
                 lectura_actual: initialData.lectura_actual || 0
             });
@@ -102,8 +108,18 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Map operational status back to human readable 'estado'
+        let estadoHuman = 'Operativo'; // Default
+        if (formData.estado_operativo === 'EN_MANTENIMIENTO') estadoHuman = 'En Mantenimiento';
+        if (formData.estado_operativo === 'FALLA_REPORTADA') estadoHuman = 'Falla Reportada';
+        if (formData.estado_operativo === 'FUERA_DE_SERVICIO') estadoHuman = 'Fuera de Servicio';
+        if (formData.estado_operativo === 'BAJA') estadoHuman = 'Baja';
+        // DISPONIBLE and EN_OPERACION map to 'Operativo'
+
         await onSave({
             ...formData,
+            estado: estadoHuman,
             tipo_equipo_id: formData.tipo_equipo_id,
             ubicacion_id: formData.ubicacion_id
         });
@@ -161,10 +177,10 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
                                     <SelectTrigger className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                                         <SelectValue placeholder="Seleccione Estado" />
                                     </SelectTrigger>
-                                    <SelectContent>
                                         <SelectItem value="DISPONIBLE">Disponible</SelectItem>
                                         <SelectItem value="EN_OPERACION">En Operación</SelectItem>
                                         <SelectItem value="EN_MANTENIMIENTO">En Mantenimiento</SelectItem>
+                                        <SelectItem value="FALLA_REPORTADA">Falla Reportada</SelectItem>
                                         <SelectItem value="FUERA_DE_SERVICIO">Fuera de Servicio</SelectItem>
                                         <SelectItem value="BAJA">Baja</SelectItem>
                                     </SelectContent>
@@ -289,54 +305,54 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
                         </DialogFooter>
                     </form>
                 )}
-            </DialogContent>
+        </DialogContent>
 
-            {/* Nested Modal for New Type */}
-            <Dialog open={isTypeModalOpen} onOpenChange={setIsTypeModalOpen}>
-                <DialogContent className="border-slate-200 dark:border-slate-800">
-                    <DialogHeader>
-                        <DialogTitle>Agregar Nuevo Tipo</DialogTitle>
-                        <DialogDescription>
-                            Crear una nueva categoría para clasificar equipos.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        <div>
-                            <Label htmlFor="newTypeName" className="mb-2 block">Nombre del Tipo</Label>
-                            <Input
-                                id="newTypeName"
-                                value={newTypeName}
-                                onChange={(e) => setNewTypeName(e.target.value)}
-                                placeholder="Ej. Torno, Fresadora..."
-                                autoFocus
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="newTypeCategory" className="mb-2 block">Categoría Operativa</Label>
-                            <Select
-                                value={newTypeCategory}
-                                onValueChange={setNewTypeCategory}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Seleccione categoría" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="MAQUINARIA_PESADA">Maquinaria Pesada</SelectItem>
-                                    <SelectItem value="EQUIPO_MOTORIZADO">Equipo Motorizado</SelectItem>
-                                    <SelectItem value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</SelectItem>
-                                    <SelectItem value="HERRAMIENTA_MENOR">Herramienta Menor</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
-                        <Button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim() || !newTypeCategory}>
-                            {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-        </Dialog>
+            {/* Nested Modal for New Type */ }
+    <Dialog open={isTypeModalOpen} onOpenChange={setIsTypeModalOpen}>
+        <DialogContent className="border-slate-200 dark:border-slate-800">
+            <DialogHeader>
+                <DialogTitle>Agregar Nuevo Tipo</DialogTitle>
+                <DialogDescription>
+                    Crear una nueva categoría para clasificar equipos.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div>
+                    <Label htmlFor="newTypeName" className="mb-2 block">Nombre del Tipo</Label>
+                    <Input
+                        id="newTypeName"
+                        value={newTypeName}
+                        onChange={(e) => setNewTypeName(e.target.value)}
+                        placeholder="Ej. Torno, Fresadora..."
+                        autoFocus
+                    />
+                </div>
+                <div>
+                    <Label htmlFor="newTypeCategory" className="mb-2 block">Categoría Operativa</Label>
+                    <Select
+                        value={newTypeCategory}
+                        onValueChange={setNewTypeCategory}
+                    >
+                        <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Seleccione categoría" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="MAQUINARIA_PESADA">Maquinaria Pesada</SelectItem>
+                            <SelectItem value="EQUIPO_MOTORIZADO">Equipo Motorizado</SelectItem>
+                            <SelectItem value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</SelectItem>
+                            <SelectItem value="HERRAMIENTA_MENOR">Herramienta Menor</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
+                <Button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim() || !newTypeCategory}>
+                    {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+        </Dialog >
     );
 }
