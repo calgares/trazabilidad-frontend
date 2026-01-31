@@ -177,6 +177,7 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
                                     <SelectTrigger className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                                         <SelectValue placeholder="Seleccione Estado" />
                                     </SelectTrigger>
+                                    <SelectContent>
                                         <SelectItem value="DISPONIBLE">Disponible</SelectItem>
                                         <SelectItem value="EN_OPERACION">En Operación</SelectItem>
                                         <SelectItem value="EN_MANTENIMIENTO">En Mantenimiento</SelectItem>
@@ -305,54 +306,54 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
                         </DialogFooter>
                     </form>
                 )}
-        </DialogContent>
+            </DialogContent>
 
-            {/* Nested Modal for New Type */ }
-    <Dialog open={isTypeModalOpen} onOpenChange={setIsTypeModalOpen}>
-        <DialogContent className="border-slate-200 dark:border-slate-800">
-            <DialogHeader>
-                <DialogTitle>Agregar Nuevo Tipo</DialogTitle>
-                <DialogDescription>
-                    Crear una nueva categoría para clasificar equipos.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-                <div>
-                    <Label htmlFor="newTypeName" className="mb-2 block">Nombre del Tipo</Label>
-                    <Input
-                        id="newTypeName"
-                        value={newTypeName}
-                        onChange={(e) => setNewTypeName(e.target.value)}
-                        placeholder="Ej. Torno, Fresadora..."
-                        autoFocus
-                    />
-                </div>
-                <div>
-                    <Label htmlFor="newTypeCategory" className="mb-2 block">Categoría Operativa</Label>
-                    <Select
-                        value={newTypeCategory}
-                        onValueChange={setNewTypeCategory}
-                    >
-                        <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Seleccione categoría" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="MAQUINARIA_PESADA">Maquinaria Pesada</SelectItem>
-                            <SelectItem value="EQUIPO_MOTORIZADO">Equipo Motorizado</SelectItem>
-                            <SelectItem value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</SelectItem>
-                            <SelectItem value="HERRAMIENTA_MENOR">Herramienta Menor</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
-                <Button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim() || !newTypeCategory}>
-                    {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
+            {/* Nested Modal for New Type */}
+            <Dialog open={isTypeModalOpen} onOpenChange={setIsTypeModalOpen}>
+                <DialogContent className="border-slate-200 dark:border-slate-800">
+                    <DialogHeader>
+                        <DialogTitle>Agregar Nuevo Tipo</DialogTitle>
+                        <DialogDescription>
+                            Crear una nueva categoría para clasificar equipos.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div>
+                            <Label htmlFor="newTypeName" className="mb-2 block">Nombre del Tipo</Label>
+                            <Input
+                                id="newTypeName"
+                                value={newTypeName}
+                                onChange={(e) => setNewTypeName(e.target.value)}
+                                placeholder="Ej. Torno, Fresadora..."
+                                autoFocus
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="newTypeCategory" className="mb-2 block">Categoría Operativa</Label>
+                            <Select
+                                value={newTypeCategory}
+                                onValueChange={setNewTypeCategory}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Seleccione categoría" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="MAQUINARIA_PESADA">Maquinaria Pesada</SelectItem>
+                                    <SelectItem value="EQUIPO_MOTORIZADO">Equipo Motorizado</SelectItem>
+                                    <SelectItem value="HERRAMIENTA_ELECTRICA">Herramienta Eléctrica</SelectItem>
+                                    <SelectItem value="HERRAMIENTA_MENOR">Herramienta Menor</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsTypeModalOpen(false)}>Cancelar</Button>
+                        <Button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim() || !newTypeCategory}>
+                            {creatingType ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Dialog >
     );
 }
