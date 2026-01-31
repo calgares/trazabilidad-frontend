@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom
 import { ThemeProvider } from "@/context/theme-provider";
 import { AuthProvider } from "@/context/auth-context";
 import { Layout } from "@/components/layout/Layout";
-import { RequireAuth } from "@/components/layout/RequireAuth";
 
 import { Login } from "@/views/login";
 import { EquiposList } from "@/views/equipos-list";
@@ -18,6 +17,7 @@ import { SystemTestsView } from "@/views/system-tests-view";
 import { HelpCenterView } from "@/views/help-center-view";
 import { IsoAssistantView } from "@/views/iso-assistant-view";
 import { SystemHealthView } from "@/views/system-health-view";
+import { IsoNormasView } from "@/views/iso-normas";
 import { WorkOrdersListView } from "@/views/work-orders-list";
 import { WorkOrderFormView } from "@/views/work-order-form";
 import { WorkOrderDetailView } from "@/views/work-order-detail";
@@ -33,40 +33,40 @@ function App() {
 
             <Route path="/login" element={<Login />} />
 
-            <Route element={<RequireAuth />}>
-              <Route
-                element={
-                  <Layout>
-                    <Outlet />
-                  </Layout>
-                }
-              >
-                <Route path="/" element={<DashboardView />} />
+            <Route
+              element={
+                <Layout>
+                  <Outlet />
+                </Layout>
+              }
+            >
 
-                <Route path="/equipos" element={<EquiposList />} />
-                <Route path="/equipos/:id" element={<EquipoDetalle />} />
+              <Route path="/" element={<DashboardView />} />
 
-                <Route path="/mantenimientos" element={<MantenimientosList />} />
+              <Route path="/equipos" element={<EquiposList />} />
+              <Route path="/equipos/:id" element={<EquipoDetalle />} />
 
-                <Route path="/work-orders" element={<WorkOrdersListView />} />
-                <Route path="/work-orders/new" element={<WorkOrderFormView />} />
-                <Route path="/work-orders/:id" element={<WorkOrderDetailView />} />
+              <Route path="/mantenimientos" element={<MantenimientosList />} />
 
-                <Route path="/fallas" element={<ReportesView />} />
-                <Route path="/reportes" element={<ReportesView />} />
+              <Route path="/work-orders" element={<WorkOrdersListView />} />
+              <Route path="/work-orders/new" element={<WorkOrderFormView />} />
+              <Route path="/work-orders/:id" element={<WorkOrderDetailView />} />
 
-                <Route path="/historial-diario" element={<HistorialDiario />} />
+              <Route path="/fallas" element={<ReportesView />} />
+              <Route path="/reportes" element={<ReportesView />} />
 
-                <Route path="/ayuda" element={<HelpCenterView />} />
-                <Route path="/asistente-iso" element={<IsoAssistantView />} />
-                <Route path="/system-health" element={<SystemHealthView />} />
-                <Route path="/configuracion" element={<ConfiguracionView />} />
+              <Route path="/historial-diario" element={<HistorialDiario />} />
 
-                <Route path="/auditoria" element={<AuditoriaList />} />
-                <Route path="/pruebas-sistema" element={<SystemTestsView />} />
-                <Route path="/usuarios" element={<UsuariosList />} />
+              <Route path="/ayuda" element={<HelpCenterView />} />
+              <Route path="/asistente-iso" element={<IsoAssistantView />} />
+              <Route path="/system-health" element={<SystemHealthView />} />
+              <Route path="/normas-iso" element={<IsoNormasView />} />
+              <Route path="/configuracion" element={<ConfiguracionView />} />
 
-              </Route>
+              <Route path="/auditoria" element={<AuditoriaList />} />
+              <Route path="/pruebas-sistema" element={<SystemTestsView />} />
+              <Route path="/usuarios" element={<UsuariosList />} />
+
             </Route>
 
           </Routes>

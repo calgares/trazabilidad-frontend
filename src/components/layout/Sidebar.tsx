@@ -17,7 +17,8 @@ import {
     HelpCircle,
     Bot,
     Activity,
-    Briefcase
+    Briefcase,
+    BookOpen
 } from "lucide-react";
 
 // ... existing code ...
@@ -31,6 +32,7 @@ const mainMenuItems = [
     { icon: History, label: "Historial Diario", path: "/historial-diario" },
     { icon: FileBarChart, label: "Reportes", path: "/reportes" },
     { icon: Bot, label: "Asistente ISO", path: "/asistente-iso" },
+    { icon: BookOpen, label: "Normas ISO", path: "/normas-iso" },
     { icon: Activity, label: "Salud del Sistema", path: "/system-health" },
     { icon: HelpCircle, label: "Centro de Ayuda", path: "/ayuda" },
 ];
