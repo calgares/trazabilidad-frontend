@@ -100,7 +100,7 @@ export function WorkOrderDetailView() {
                 <ArrowLeft className="h-4 w-4 mr-2" /> Volver al listado
             </Button>
 
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg border shadow-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-lg border dark:border-slate-800 shadow-sm">
                 <div>
                     <div className="flex items-center gap-3 mb-2">
                         <h1 className="text-2xl font-bold font-mono">{ot.numero_ot}</h1>
