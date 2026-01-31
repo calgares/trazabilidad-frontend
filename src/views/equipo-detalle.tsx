@@ -31,7 +31,6 @@ import {
     Trash2,
     CalendarClock,
     Briefcase,
-    Briefcase,
     ClipboardList,
     QrCode,
     Printer,
