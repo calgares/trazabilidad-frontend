@@ -44,7 +44,11 @@ const adminMenuItems = [
     { icon: Settings, label: "Configuración", path: "/configuracion", roles: ['Administrador'] }, // Moved Config to admin or keep generic? Let's keep Config general or Admin? User asked for Admin section. Let's put Config in Admin for now or keep separate. User didn't specify Config. I'll put Config at bottom or keep in Utils.
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+    className?: string;
+}
+
+export function Sidebar({ className }: SidebarProps) {
     const location = useLocation();
     const { profile, signOut } = useAuth();
 
@@ -58,7 +62,7 @@ export function Sidebar() {
     const filteredAdmin = filterItems(adminMenuItems);
 
     return (
-        <div className="flex flex-col w-64 h-screen bg-slate-900 text-slate-300 border-r border-slate-800">
+        <div className={cn("flex flex-col w-64 h-screen bg-slate-900 text-slate-300 border-r border-slate-800", className)}>
             {/* Header */}
             <div className="flex items-center justify-center h-16 border-b border-slate-800">
                 <span className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
