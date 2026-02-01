@@ -19,15 +19,25 @@ export interface Repuesto {
     fecha_actualizacion: string;
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
+
 export function useRepuestos(equipoId: string) {
     const [repuestos, setRepuestos] = useState<Repuesto[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('auth_token');
+        return {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        };
+    };
+
     const fetchRepuestos = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/repuestos/equipo/${equipoId}`);
+            const response = await fetch(`${API_URL}/api/repuestos/equipo/${equipoId}`);
             if (!response.ok) throw new Error('Error al cargar repuestos');
             const data = await response.json();
 
@@ -57,9 +67,9 @@ export function useRepuestos(equipoId: string) {
 
     const createRepuesto = async (data: Partial<Repuesto>) => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/repuestos`, {
+            const response = await fetch(`${API_URL}/api/repuestos`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({ ...data, equipo_id: equipoId })
             });
             if (!response.ok) {
@@ -75,9 +85,9 @@ export function useRepuestos(equipoId: string) {
 
     const updateRepuesto = async (id: number, data: Partial<Repuesto>) => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/repuestos/${id}`, {
+            const response = await fetch(`${API_URL}/api/repuestos/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(data)
             });
             if (!response.ok) {
@@ -93,8 +103,9 @@ export function useRepuestos(equipoId: string) {
 
     const deleteRepuesto = async (id: number) => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/repuestos/${id}`, {
-                method: 'DELETE'
+            const response = await fetch(`${API_URL}/api/repuestos/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
             });
             if (!response.ok) {
                 const errorData = await response.json();
