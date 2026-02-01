@@ -7,7 +7,7 @@ export interface Caracteristica {
 
 export interface Repuesto {
     id: number;
-    equipo_id: number;
+    equipo_id: string; // UUID
     nombre: string;
     codigo_parte: string;
     cantidad: number;
@@ -83,7 +83,7 @@ export function useRepuestos(equipoId: string) {
         }
     };
 
-    const updateRepuesto = async (id: number, data: Partial<Repuesto>) => {
+    const updateRepuesto = async (id: number | string, data: Partial<Repuesto>) => {
         try {
             const response = await fetch(`${API_URL}/api/repuestos/${id}`, {
                 method: 'PUT',
@@ -101,7 +101,7 @@ export function useRepuestos(equipoId: string) {
         }
     };
 
-    const deleteRepuesto = async (id: number) => {
+    const deleteRepuesto = async (id: number | string) => {
         try {
             const response = await fetch(`${API_URL}/api/repuestos/${id}`, {
                 method: 'DELETE',

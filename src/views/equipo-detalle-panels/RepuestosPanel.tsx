@@ -112,11 +112,23 @@ export function RepuestosPanel({ equipoId }: RepuestosPanelProps) {
         if (!formData.nombre) return;
         setSaving(true);
 
+        // Capture pending characteristic if user forgot to click Add
+        const finalFormData = { ...formData };
+        if (newCharName.trim() && newCharValue.trim()) {
+            finalFormData.caracteristicas = [
+                ...finalFormData.caracteristicas,
+                { nombre: newCharName, valor: newCharValue }
+            ];
+            // Clear inputs for next time
+            setNewCharName("");
+            setNewCharValue("");
+        }
+
         let result;
         if (editingRepuesto) {
-            result = await updateRepuesto(editingRepuesto.id, formData);
+            result = await updateRepuesto(editingRepuesto.id, finalFormData);
         } else {
-            result = await createRepuesto(formData);
+            result = await createRepuesto(finalFormData);
         }
 
         setSaving(false);
