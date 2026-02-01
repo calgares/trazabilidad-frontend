@@ -91,8 +91,8 @@ export function MantenimientosList() {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium">{m.equipos?.nombre}</span>
-                                                    <span className="text-xs text-slate-500 font-mono">{m.equipos?.codigo_unico}</span>
+                                                    <span className="font-medium">{m.equipo_nombre}</span>
+                                                    <span className="text-xs text-slate-500 font-mono">{m.codigo_unico}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
