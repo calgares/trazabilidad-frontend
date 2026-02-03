@@ -9,6 +9,8 @@ interface EquipmentData {
     ubicacion_id: string;
     estado: string;
     estado_operativo?: string;
+    last_lat?: number | null;
+    last_lon?: number | null;
 }
 
 export function useEquiposActions() {

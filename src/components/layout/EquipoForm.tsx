@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useGeolocation } from "@/hooks/use-geolocation"; // Import hook
 import {
     Dialog,
     DialogContent,
@@ -106,8 +107,21 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
     const selectedType = tiposEquipo.find(t => t.id.toString() === formData.tipo_equipo_id);
     const showCounters = selectedType && (selectedType.categoria_operativa === 'MAQUINARIA_PESADA' || selectedType.categoria_operativa === 'EQUIPO_MOTORIZADO');
 
+    const { location, getCurrentLocation } = useGeolocation();
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // 1. Try to get location before saving
+        let coords = { lat: 0, lon: 0 };
+        try {
+            const pos = await getCurrentLocation();
+            if (pos) {
+                coords = pos;
+            }
+        } catch (err) {
+            console.warn("Could not get location", err);
+        }
 
         // Map operational status back to human readable 'estado'
         let estadoHuman = 'Operativo'; // Default
@@ -121,7 +135,9 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
             ...formData,
             estado: estadoHuman,
             tipo_equipo_id: formData.tipo_equipo_id,
-            ubicacion_id: formData.ubicacion_id
+            ubicacion_id: formData.ubicacion_id,
+            last_lat: coords.lat || null,
+            last_lon: coords.lon || null
         });
     };
 
@@ -289,7 +305,24 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
 
 
 
-                        <DialogFooter className="pt-4 gap-2">
+                        {/* Location Indicator */}
+                        <div className="flex items-center justify-end px-1 mb-2">
+                            {location.loading ? (
+                                <span className="text-xs text-blue-500 flex items-center gap-1">
+                                    <Loader2 className="h-3 w-3 animate-spin" /> Obteniendo ubicación...
+                                </span>
+                            ) : location.latitude ? (
+                                <span className="text-xs text-green-600 dark:text-green-400 font-mono flex items-center gap-1">
+                                    📍 {location.latitude.toFixed(5)}, {location.longitude?.toFixed(5)}
+                                </span>
+                            ) : (
+                                <span className="text-xs text-slate-400 italic">
+                                    📍 Sin ubicación (se intentará obtener al guardar)
+                                </span>
+                            )}
+                        </div>
+
+                        <DialogFooter className="pt-2 gap-2">
                             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
                                 Cancelar
                             </Button>
