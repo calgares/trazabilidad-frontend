@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
+import { api } from '@/services/api-client';
 
 export interface HistorialEstado {
     id: string;
@@ -14,6 +13,8 @@ export interface HistorialEstado {
     usuario_nombre?: string;
     usuario_apellido?: string;
     usuario_email?: string;
+    latitud?: number;
+    longitud?: number;
 }
 
 export function useEquipoHistorial(equipoId: string) {
@@ -26,19 +27,11 @@ export function useEquipoHistorial(equipoId: string) {
 
         try {
             setLoading(true);
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`${API_URL}/api/equipos/${equipoId}/historial`, {
-                headers: {
-                    'Authorization': token ? `Bearer ${token}` : '',
-                }
-            });
+            const { data, error } = await api.get<HistorialEstado[]>(`/api/equipos/${equipoId}/historial`);
 
-            if (!response.ok) {
-                throw new Error('Error al cargar historial');
-            }
+            if (error) throw new Error(error as string);
 
-            const data = await response.json();
-            setHistorial(data as HistorialEstado[] || []);
+            setHistorial(data || []);
         } catch (err: any) {
             console.error("Error al cargar historial:", err);
             setError(err.message);

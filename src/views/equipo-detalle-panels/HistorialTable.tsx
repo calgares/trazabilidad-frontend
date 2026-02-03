@@ -32,6 +32,7 @@ export function HistorialTable({ equipoId }: HistorialTableProps) {
                         <TableHead>Estado Anterior</TableHead>
                         <TableHead>Nuevo Estado</TableHead>
                         <TableHead>Motivo</TableHead>
+                        <TableHead>Ubicación</TableHead>
                         <TableHead className="text-right">Usuario</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -64,6 +65,20 @@ export function HistorialTable({ equipoId }: HistorialTableProps) {
                             </TableCell>
                             <TableCell className="text-sm text-slate-600 dark:text-slate-300">
                                 {h.motivo || <span className="text-slate-400 italic">Sin motivo especificado</span>}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                                {h.latitud && h.longitud ? (
+                                    <a
+                                        href={`https://www.google.com/maps?q=${h.latitud},${h.longitud}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+                                    >
+                                        <span className="text-xs">📍 Ver en mapa</span>
+                                    </a>
+                                ) : (
+                                    <span className="text-xs text-slate-400 italic">-</span>
+                                )}
                             </TableCell>
                             <TableCell className="text-right text-sm">
                                 {h.usuario_nombre ? (
