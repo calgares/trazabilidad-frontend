@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
+import { SignaturePad, type SignaturePadRef } from "@/components/ui/signature-pad";
 
 export function WorkOrderDetailView() {
     const { id } = useParams();
