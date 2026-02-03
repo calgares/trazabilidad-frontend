@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useWorkOrders } from '@/hooks/use-work-orders';
 import { Button } from '@/components/ui/button';
@@ -9,11 +9,15 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Play, Pause, CheckCircle, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { SignaturePad, SignaturePadRef } from "@/components/ui/signature-pad";
 
 export function WorkOrderDetailView() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { getWorkOrderById, updateWorkOrder, addTask, toggleTask, loading } = useWorkOrders();
+    const { getWorkOrderById, updateWorkOrder, finalizeWorkOrder, addTask, toggleTask, loading } = useWorkOrders();
 
     const [ot, setOt] = useState<any | null>(null);
     const [tasks, setTasks] = useState<any[]>([]);
@@ -21,6 +25,12 @@ export function WorkOrderDetailView() {
     const [_isRefreshing, setIsRefreshing] = useState(false);
 
     const [newTask, setNewTask] = useState("");
+
+    // Signature / Closure State
+    const [isClosureModalOpen, setIsClosureModalOpen] = useState(false);
+    const [closureObs, setClosureObs] = useState("");
+    const [isSigning, setIsSigning] = useState(false);
+    const sigPadRef = useRef<SignaturePadRef>(null);
 
     const refreshData = async () => {
         if (!id) return;
@@ -45,6 +55,13 @@ export function WorkOrderDetailView() {
     const handleStatusChange = async (newStatus: any) => {
         if (!id || !ot) return;
 
+        if (newStatus === 'TERMINADA') {
+            // Open Modal instead of direct update
+            setClosureObs("");
+            setIsClosureModalOpen(true);
+            return;
+        }
+
         try {
             const updates: any = { estado: newStatus };
 
@@ -60,6 +77,31 @@ export function WorkOrderDetailView() {
             refreshData();
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleFinalizeWithSignature = async () => {
+        if (!id) return;
+        if (sigPadRef.current?.isEmpty()) {
+            alert("La firma del técnico es obligatoria para cerrar la orden.");
+            return;
+        }
+
+        setIsSigning(true);
+        try {
+            const signatureData = sigPadRef.current?.toDataURL();
+
+            await finalizeWorkOrder(id, {
+                firma_tecnico: signatureData || "",
+                observaciones_cierre: closureObs
+            });
+
+            setIsClosureModalOpen(false);
+            refreshData();
+        } catch (err: any) {
+            alert("Error al finalizar: " + err.message);
+        } finally {
+            setIsSigning(false);
         }
     };
 
@@ -150,6 +192,27 @@ export function WorkOrderDetailView() {
                 </div>
             </div>
 
+            {/* Signature Display if Completed */}
+            {ot.fecha_fin && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg flex items-center justify-between">
+                    <div>
+                        <h3 className="font-semibold text-green-800 dark:text-green-300">Orden Finalizada</h3>
+                        <p className="text-sm text-green-700 dark:text-green-400">
+                            Cerrada el {new Date(ot.fecha_fin).toLocaleString()}
+                        </p>
+                        {ot.observaciones_cierre && (
+                            <p className="text-sm mt-1 italic text-slate-600 dark:text-slate-400">"{ot.observaciones_cierre}"</p>
+                        )}
+                    </div>
+                    {ot.firma_tecnico && (
+                        <div className="bg-white p-2 rounded border border-slate-200">
+                            <p className="text-xs text-center text-slate-400 mb-1">Firma Técnico</p>
+                            <img src={ot.firma_tecnico} alt="Firma" className="h-16 object-contain" />
+                        </div>
+                    )}
+                </div>
+            )}
+
             <Tabs defaultValue="tasks">
                 <TabsList>
                     <TabsTrigger value="tasks">
@@ -209,6 +272,41 @@ export function WorkOrderDetailView() {
                     <p><strong>Origen:</strong> {ot.origen}</p>
                 </TabsContent>
             </Tabs>
+
+            {/* Closure Modal */}
+            <Dialog open={isClosureModalOpen} onOpenChange={setIsClosureModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Finalizar Orden de Trabajo</DialogTitle>
+                        <DialogDescription>
+                            Por favor, firme para certificar que el trabajo ha sido completado satisfactoriamente.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Observaciones Finales</Label>
+                            <Textarea
+                                value={closureObs}
+                                onChange={(e) => setClosureObs(e.target.value)}
+                                placeholder="Describa la solución aplicada..."
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Firma del Técnico *</Label>
+                            <SignaturePad ref={sigPadRef} />
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsClosureModalOpen(false)}>Cancelar</Button>
+                        <Button onClick={handleFinalizeWithSignature} disabled={isSigning}>
+                            {isSigning ? "Firmando..." : "Firmar v cerrar"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
