@@ -109,6 +109,12 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
 
     const { location, getCurrentLocation } = useGeolocation();
 
+    useEffect(() => {
+        if (isOpen) {
+            getCurrentLocation();
+        }
+    }, [isOpen, getCurrentLocation]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
