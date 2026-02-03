@@ -55,9 +55,9 @@ export function useGeolocation() {
                     resolve(null); // Resolve null so flow continues without blocking
                 },
                 {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
+                    enableHighAccuracy: false, // Changed to false to avoid timeouts on desktop/slow devices
+                    timeout: 15000,            // Increased to 15s
+                    maximumAge: 30000          // Allow cached positions up to 30s old
                 }
             );
         });
