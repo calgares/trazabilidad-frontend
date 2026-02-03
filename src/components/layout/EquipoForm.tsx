@@ -317,13 +317,35 @@ export function EquipoForm({ isOpen, onClose, onSave, initialData, loading: savi
                                 <span className="text-xs text-blue-500 flex items-center gap-1">
                                     <Loader2 className="h-3 w-3 animate-spin" /> Obteniendo ubicación...
                                 </span>
+                            ) : location.error ? (
+                                <span className="text-xs text-red-500 flex items-center gap-1 font-medium">
+                                    ⚠️ {location.error}
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        size="sm"
+                                        className="h-auto p-0 ml-1 text-xs text-blue-600 underline"
+                                        onClick={getCurrentLocation}
+                                    >
+                                        Reintentar
+                                    </Button>
+                                </span>
                             ) : location.latitude ? (
                                 <span className="text-xs text-green-600 dark:text-green-400 font-mono flex items-center gap-1">
                                     📍 {location.latitude.toFixed(5)}, {location.longitude?.toFixed(5)}
                                 </span>
                             ) : (
-                                <span className="text-xs text-slate-400 italic">
-                                    📍 Sin ubicación (se intentará obtener al guardar)
+                                <span className="text-xs text-slate-400 italic flex items-center gap-1">
+                                    📍 Sin ubicación
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        size="sm"
+                                        className="h-auto p-0 ml-1 text-xs text-blue-600 underline"
+                                        onClick={getCurrentLocation}
+                                    >
+                                        Reintentar
+                                    </Button>
                                 </span>
                             )}
                         </div>
