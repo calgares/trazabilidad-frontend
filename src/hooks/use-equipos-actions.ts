@@ -34,12 +34,13 @@ export function useEquiposActions() {
                 body: JSON.stringify(data)
             });
 
-            const result = await response.json();
-
             if (!response.ok) {
+                const result = await response.json();
                 throw new Error(result.error || 'Error creando equipo');
             }
 
+            // V3 returns { id }
+            const result = await response.json();
             return { success: true, data: result }
         } catch (err: unknown) {
             console.error("Error creating equipment:", err)
@@ -59,13 +60,14 @@ export function useEquiposActions() {
                 body: JSON.stringify(data)
             });
 
-            const result = await response.json();
-
             if (!response.ok) {
+                const result = await response.json();
                 throw new Error(result.error || 'Error actualizando equipo');
             }
 
-            return { success: true, data: result }
+            // V3: 204 No Content (Success)
+            // We do NOT parse JSON here as body might be empty
+            return { success: true }
         } catch (err: unknown) {
             console.error("Error updating equipment:", err)
             return { success: false, error: err instanceof Error ? err.message : 'Error desconocido' }
@@ -88,6 +90,7 @@ export function useEquiposActions() {
                 throw new Error(result.error || 'Error eliminando equipo');
             }
 
+            // V3: 204 No Content
             return { success: true }
         } catch (err: unknown) {
             console.error("Error deleting equipment:", err)
