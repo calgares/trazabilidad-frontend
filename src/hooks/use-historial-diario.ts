@@ -1,46 +1,42 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react';
+import { api } from '@/services/api-client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
-
-export interface DailyHistoryRecord {
+export interface HistoryEvent {
     id: string;
+    tipo: 'mantenimiento' | 'falla' | 'movimiento';
+    descripcion: string;
     fecha: string;
-    total_mantenimientos: number;
-    total_fallas: number;
-    resumen_actividad: string | null;
+    equipo_nombre: string;
+    equipo_codigo: string;
+    latitud?: number;
+    longitud?: number;
+    usuario_nombre?: string;
 }
 
 export function useHistorialDiario() {
-    const [history, setHistory] = useState<DailyHistoryRecord[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const [history, setHistory] = useState<HistoryEvent[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const fetchHistory = useCallback(async () => {
         try {
-            setLoading(true)
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch(`${API_URL}/api/historial-diario`, {
-                headers: {
-                    'Authorization': token ? `Bearer ${token}` : '',
-                }
-            });
+            setLoading(true);
+            const { data, error } = await api.get<HistoryEvent[]>('/api/historial-diario');
 
-            if (!response.ok) {
-                throw new Error('Error al cargar historial');
-            }
+            if (error) throw new Error(error as string);
 
-            const data = await response.json();
-            setHistory(data || [])
+            setHistory(data || []);
         } catch (err: any) {
-            setError(err.message)
+            console.error("Error fetching daily history:", err);
+            setError(err.message);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }, [])
+    }, []);
 
     useEffect(() => {
-        fetchHistory()
-    }, [fetchHistory])
+        fetchHistory();
+    }, [fetchHistory]);
 
-    return { history, loading, error, refresh: fetchHistory }
+    return { history, loading, error, refresh: fetchHistory };
 }

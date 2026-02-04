@@ -38,16 +38,16 @@ export function HistorialDiario() {
         );
     }
 
-    // Calculate trends
-    const totalMts = history.reduce((acc, curr) => acc + curr.total_mantenimientos, 0);
-    const totalFails = history.reduce((acc, curr) => acc + curr.total_fallas, 0);
+    // Calculate stats for cards
+    const totalMts = history.filter(h => h.tipo === 'mantenimiento').length;
+    const totalFails = history.filter(h => h.tipo === 'falla').length;
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Historial Diario</h2>
-                    <p className="text-slate-500 dark:text-slate-400">Resumen ejecutivo de actividades diarias (Últimos 30 días).</p>
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Historial de Actividad</h2>
+                    <p className="text-slate-500 dark:text-slate-400">Registro cronológico de movimientos, mantenimientos y eventos.</p>
                 </div>
             </div>
 
@@ -100,56 +100,70 @@ export function HistorialDiario() {
 
             <Card className="border-slate-200 dark:border-slate-800">
                 <CardHeader>
-                    <CardTitle>Registro Detallado</CardTitle>
-                    <CardDescription>Desglose por fecha de eventos registrados automáticamente.</CardDescription>
+                    <CardTitle>Bitácora de Eventos</CardTitle>
+                    <CardDescription>Movimientos detallados y ubicación (GPS).</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="overflow-x-auto">
                         <Table>
                             <TableHeader className="bg-slate-50 dark:bg-slate-900">
                                 <TableRow>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead className="text-center">Mantenimientos</TableHead>
-                                    <TableHead className="text-center">Fallas</TableHead>
-                                    <TableHead>Estado del Día</TableHead>
+                                    <TableHead>Fecha / Hora</TableHead>
+                                    <TableHead>Equipo</TableHead>
+                                    <TableHead>Tipo de Evento</TableHead>
+                                    <TableHead>Descripción</TableHead>
+                                    <TableHead>Ubicación</TableHead>
+                                    <TableHead>Usuario</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {history.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-32 text-center text-slate-500 italic">
-                                            No hay historial de actividad reciente.
+                                        <TableCell colSpan={6} className="h-32 text-center text-slate-500 italic">
+                                            No hay actividad reciente registrada.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     history.map((record) => (
-                                        <TableRow key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
-                                            <TableCell className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                                                <Calendar className="h-4 w-4 text-slate-400" />
-                                                {format(parseISO(record.fecha), "dd MMMM yyyy", { locale: es })}
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${record.total_mantenimientos > 0 ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
-                                                    }`}>
-                                                    {record.total_mantenimientos}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${record.total_fallas > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                                                    }`}>
-                                                    {record.total_fallas}
-                                                </span>
+                                        <TableRow key={`${record.tipo}-${record.id}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
+                                            <TableCell className="text-xs font-mono">
+                                                <div className="font-bold">{format(parseISO(record.fecha), "dd/MM/yyyy", { locale: es })}</div>
+                                                <div className="text-slate-500">{format(parseISO(record.fecha), "HH:mm a")}</div>
                                             </TableCell>
                                             <TableCell>
-                                                {record.total_fallas === 0 ? (
-                                                    <span className="text-green-600 dark:text-green-400 text-sm flex items-center gap-1 font-medium">
-                                                        <TrendingUp className="h-3 w-3" /> Operación Normal
-                                                    </span>
+                                                <div className="font-medium text-sm">{record.equipo_nombre}</div>
+                                                <div className="text-xs text-slate-500">{record.equipo_codigo}</div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-bold border ${record.tipo === 'mantenimiento' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                    record.tipo === 'falla' ? 'bg-red-50 text-red-700 border-red-200' :
+                                                        'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    }`}>
+                                                    {record.tipo === 'mantenimiento' && <Wrench className="h-3 w-3 mr-1" />}
+                                                    {record.tipo === 'falla' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                                                    {record.tipo === 'movimiento' && <TrendingUp className="h-3 w-3 mr-1" />}
+                                                    {record.tipo.toUpperCase()}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="max-w-xs truncate text-sm text-slate-600">
+                                                {record.descripcion}
+                                            </TableCell>
+                                            <TableCell>
+                                                {record.latitud && record.longitud ? (
+                                                    <a
+                                                        href={`https://www.google.com/maps?q=${record.latitud},${record.longitud}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline text-xs"
+                                                    >
+                                                        <span>📍 Ver mapa</span>
+                                                    </a>
                                                 ) : (
-                                                    <span className="text-red-600 dark:text-red-400 text-sm flex items-center gap-1 font-medium">
-                                                        <AlertTriangle className="h-3 w-3" /> Incidentes Reportados
-                                                    </span>
+                                                    <span className="text-slate-400 text-xs italic">-</span>
                                                 )}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-slate-500">
+                                                {record.usuario_nombre || 'Sistema'}
                                             </TableCell>
                                         </TableRow>
                                     ))
