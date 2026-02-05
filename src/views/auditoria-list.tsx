@@ -26,8 +26,8 @@ export function AuditoriaList() {
     // Filters
     const [filterType, setFilterType] = useState('');
     const [filterUser, setFilterUser] = useState('');
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
+    // const [dateFrom, setDateFrom] = useState('');
+    // const [dateTo, setDateTo] = useState('');
 
     const { logs, loading, error, totalCount, fetchLogs } = useAudit();
 
@@ -38,13 +38,11 @@ export function AuditoriaList() {
                 page: currentPage,
                 limit: pageSize,
                 type: filterType || undefined,
-                userId: filterUser || undefined,
-                from: dateFrom || undefined,
-                to: dateTo || undefined
+                userId: filterUser || undefined
             });
         }, 300); // Debounce
         return () => clearTimeout(timeout);
-    }, [currentPage, filterType, filterUser, dateFrom, dateTo, fetchLogs, pageSize]);
+    }, [currentPage, filterType, filterUser, fetchLogs, pageSize]);
 
     // Auto-refresh (Polling) every 10s
     useEffect(() => {
@@ -53,13 +51,11 @@ export function AuditoriaList() {
                 page: currentPage,
                 limit: pageSize,
                 type: filterType || undefined,
-                userId: filterUser || undefined,
-                from: dateFrom || undefined,
-                to: dateTo || undefined
+                userId: filterUser || undefined
             });
         }, 10000);
         return () => clearInterval(interval);
-    }, [currentPage, filterType, filterUser, dateFrom, dateTo, fetchLogs, pageSize]);
+    }, [currentPage, filterType, filterUser, fetchLogs, pageSize]);
 
 
     const getActionColor = (action: string) => {
@@ -69,29 +65,11 @@ export function AuditoriaList() {
         return 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
     };
 
-    // Helper to format action names
-    const formatAction = (action: string) => {
-        const map: Record<string, string> = {
-            'EQUIPMENT_CREATED': 'Equipo Creado',
-            'EQUIPMENT_UPDATED': 'Equipo Actualizado',
-            'EQUIPMENT_DECOMMISSIONED': 'Equipo Dado de Baja',
-            'WORK_ORDER_SIGNED': 'Orden Firmada',
-            'MAINTENANCE_CREATED': 'Mantenimiento Creado',
-            'LOCATION_CREATED': 'Ubicacion Creada',
-            'LOCATION_UPDATED': 'Ubicacion Actualizada',
-            'FAILURE_CREATED': 'Falla Registrada',
-            'FAILURE_RESOLVED': 'Falla Resuelta',
-            'PREVENTIVE_CREATED': 'Preventivo Creado',
-            'PREVENTIVE_DELETED': 'Preventivo Eliminado',
-        };
-        return map[action] || action;
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Monitor de Auditoría (VIVO)</h2>
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Monitor de Auditoria (VIVO)</h2>
                     <p className="text-slate-500 dark:text-slate-400">Visibilidad en tiempo real de eventos del sistema.</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm font-mono text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full border border-green-200 dark:border-green-900">
@@ -124,24 +102,7 @@ export function AuditoriaList() {
                             className="bg-slate-50 dark:bg-slate-900"
                         />
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-500">📅 Fecha Desde</label>
-                        <Input
-                            type="date"
-                            value={dateFrom}
-                            onChange={e => setDateFrom(e.target.value)}
-                            className="bg-slate-50 dark:bg-slate-900"
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-slate-500">📅 Fecha Hasta</label>
-                        <Input
-                            type="date"
-                            value={dateTo}
-                            onChange={e => setDateTo(e.target.value)}
-                            className="bg-slate-50 dark:bg-slate-900"
-                        />
-                    </div>
+                    {/* Date filters could go here */}
                 </CardContent>
             </Card>
 
@@ -247,70 +208,39 @@ export function AuditoriaList() {
 
             {/* Details Modal */}
             <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-                <DialogContent className="max-w-[700px] border-slate-200 dark:border-slate-800 p-0 overflow-hidden">
-                    <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700">
-                        <DialogTitle className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${getActionColor(selectedLog?.action || '')}`}>
-                                {selectedLog?.action?.includes('CREATED') && '+'}
-                                {selectedLog?.action?.includes('UPDATED') && '*'}
-                                {selectedLog?.action?.includes('DECOMMISSIONED') && 'X'}
-                                {selectedLog?.action?.includes('SIGNED') && 'S'}
-                                {!selectedLog?.action?.includes('CREATED') && !selectedLog?.action?.includes('UPDATED') && !selectedLog?.action?.includes('DECOMMISSIONED') && !selectedLog?.action?.includes('SIGNED') && '#'}
-                            </div>
-                            <div>
-                                <span className="text-lg">{formatAction(selectedLog?.action || '')}</span>
-                                <p className="font-mono text-xs text-slate-500 mt-1">ID: {selectedLog?.id}</p>
-                            </div>
-                        </DialogTitle>
+                <DialogContent className="max-w-[600px] border-slate-200 dark:border-slate-800">
+                    <DialogHeader>
+                        <DialogTitle>Detalle del Evento</DialogTitle>
+                        <DialogDescription className="font-mono text-xs">
+                            ID: {selectedLog?.id}
+                        </DialogDescription>
                     </DialogHeader>
 
                     {selectedLog && (
-                        <div className="p-6 space-y-6">
-                            {/* Main Info Grid */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Entidad</span>
-                                    <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{selectedLog.entity_type}</p>
-                                    <p className="font-mono text-xs text-slate-500 mt-1">#{selectedLog.entity_id}</p>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span className="text-slate-500 block text-xs">Accion</span>
+                                    <span className="font-semibold">{selectedLog.action}</span>
                                 </div>
-                                <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Fecha y Hora</span>
-                                    <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{format(new Date(selectedLog.created_at), "dd 'de' MMMM, yyyy", { locale: es })}</p>
-                                    <p className="font-mono text-xs text-slate-500 mt-1">{format(new Date(selectedLog.created_at), "HH:mm:ss", { locale: es })}</p>
+                                <div>
+                                    <span className="text-slate-500 block text-xs">Entidad</span>
+                                    <span className="font-mono">{selectedLog.entity_type} #{selectedLog.entity_id}</span>
+                                </div>
+                                <div>
+                                    <span className="text-slate-500 block text-xs">Usuario</span>
+                                    <span>{selectedLog.user_nombre || 'Sistema'} {selectedLog.user_apellido}</span>
+                                </div>
+                                <div>
+                                    <span className="text-slate-500 block text-xs">Fecha</span>
+                                    <span>{format(new Date(selectedLog.created_at), "PPP pp", { locale: es })}</span>
                                 </div>
                             </div>
 
-                            {/* User Info */}
-                            <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
-                                <span className="text-xs font-semibold text-blue-500 uppercase tracking-wide">Usuario Responsable</span>
-                                <p className="mt-2 font-semibold text-blue-700 dark:text-blue-300 text-lg">
-                                    {selectedLog.user_nombre ? `${selectedLog.user_nombre} ${selectedLog.user_apellido || ''}` : 'Sistema (Automático)'}
-                                </p>
-                                {selectedLog.user_email && <p className="text-sm text-blue-600 dark:text-blue-400">{selectedLog.user_email}</p>}
-                                {selectedLog.user_id && <p className="font-mono text-xs text-blue-400 mt-1">ID: {selectedLog.user_id}</p>}
-                            </div>
-
-                            {/* Changes Details */}
-                            <div>
-                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-3">Detalles del Cambio</span>
-                                {selectedLog.details && typeof selectedLog.details === 'object' ? (
-                                    <div className="bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 space-y-2">
-                                        {Object.entries(selectedLog.details.changes || selectedLog.details).map(([key, value]) => (
-                                            <div key={key} className="flex justify-between items-center py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                                                <span className="text-sm font-medium text-slate-600 dark:text-slate-400 capitalize">{key.replace(/_/g, ' ')}</span>
-                                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 max-w-[300px] truncate text-right">
-                                                    {typeof value === 'object' ? JSON.stringify(value) : String(value || '-')}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-md bg-slate-950 p-4 overflow-auto max-h-[200px]">
-                                        <pre className="text-xs text-green-400 font-mono">
-                                            {JSON.stringify(selectedLog.details, null, 2)}
-                                        </pre>
-                                    </div>
-                                )}
+                            <div className="rounded-md bg-slate-950 p-4 overflow-auto max-h-[300px]">
+                                <pre className="text-xs text-green-400 font-mono">
+                                    {JSON.stringify(selectedLog.details, null, 2)}
+                                </pre>
                             </div>
                         </div>
                     )}
