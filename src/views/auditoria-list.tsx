@@ -26,8 +26,8 @@ export function AuditoriaList() {
     // Filters
     const [filterType, setFilterType] = useState('');
     const [filterUser, setFilterUser] = useState('');
-    // const [dateFrom, setDateFrom] = useState('');
-    // const [dateTo, setDateTo] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
 
     const { logs, loading, error, totalCount, fetchLogs } = useAudit();
 
@@ -38,11 +38,13 @@ export function AuditoriaList() {
                 page: currentPage,
                 limit: pageSize,
                 type: filterType || undefined,
-                userId: filterUser || undefined
+                userId: filterUser || undefined,
+                from: dateFrom || undefined,
+                to: dateTo || undefined
             });
         }, 300); // Debounce
         return () => clearTimeout(timeout);
-    }, [currentPage, filterType, filterUser, fetchLogs, pageSize]);
+    }, [currentPage, filterType, filterUser, dateFrom, dateTo, fetchLogs, pageSize]);
 
     // Auto-refresh (Polling) every 10s
     useEffect(() => {
@@ -51,11 +53,13 @@ export function AuditoriaList() {
                 page: currentPage,
                 limit: pageSize,
                 type: filterType || undefined,
-                userId: filterUser || undefined
+                userId: filterUser || undefined,
+                from: dateFrom || undefined,
+                to: dateTo || undefined
             });
         }, 10000);
         return () => clearInterval(interval);
-    }, [currentPage, filterType, filterUser, fetchLogs, pageSize]);
+    }, [currentPage, filterType, filterUser, dateFrom, dateTo, fetchLogs, pageSize]);
 
 
     const getActionColor = (action: string) => {
@@ -102,7 +106,24 @@ export function AuditoriaList() {
                             className="bg-slate-50 dark:bg-slate-900"
                         />
                     </div>
-                    {/* Date filters could go here */}
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-500">Fecha Desde</label>
+                        <Input
+                            type="date"
+                            value={dateFrom}
+                            onChange={e => setDateFrom(e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-900"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-xs font-semibold text-slate-500">Fecha Hasta</label>
+                        <Input
+                            type="date"
+                            value={dateTo}
+                            onChange={e => setDateTo(e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-900"
+                        />
+                    </div>
                 </CardContent>
             </Card>
 
