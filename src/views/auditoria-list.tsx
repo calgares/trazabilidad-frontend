@@ -72,17 +72,17 @@ export function AuditoriaList() {
     // Helper to format action names
     const formatAction = (action: string) => {
         const map: Record<string, string> = {
-            'EQUIPMENT_CREATED': '✨ Equipo Creado',
-            'EQUIPMENT_UPDATED': '✏️ Equipo Actualizado',
-            'EQUIPMENT_DECOMMISSIONED': '🗑️ Equipo Dado de Baja',
-            'WORK_ORDER_SIGNED': '✍️ Orden Firmada',
-            'MAINTENANCE_CREATED': '🔧 Mantenimiento Creado',
-            'LOCATION_CREATED': '📍 Ubicación Creada',
-            'LOCATION_UPDATED': '📍 Ubicación Actualizada',
-            'FAILURE_CREATED': '⚠️ Falla Registrada',
-            'FAILURE_RESOLVED': '✅ Falla Resuelta',
-            'PREVENTIVE_CREATED': '📅 Preventivo Creado',
-            'PREVENTIVE_DELETED': '📅 Preventivo Eliminado',
+            'EQUIPMENT_CREATED': 'Equipo Creado',
+            'EQUIPMENT_UPDATED': 'Equipo Actualizado',
+            'EQUIPMENT_DECOMMISSIONED': 'Equipo Dado de Baja',
+            'WORK_ORDER_SIGNED': 'Orden Firmada',
+            'MAINTENANCE_CREATED': 'Mantenimiento Creado',
+            'LOCATION_CREATED': 'Ubicacion Creada',
+            'LOCATION_UPDATED': 'Ubicacion Actualizada',
+            'FAILURE_CREATED': 'Falla Registrada',
+            'FAILURE_RESOLVED': 'Falla Resuelta',
+            'PREVENTIVE_CREATED': 'Preventivo Creado',
+            'PREVENTIVE_DELETED': 'Preventivo Eliminado',
         };
         return map[action] || action;
     };
@@ -251,11 +251,11 @@ export function AuditoriaList() {
                     <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700">
                         <DialogTitle className="flex items-center gap-3">
                             <div className={`p-2 rounded-lg ${getActionColor(selectedLog?.action || '')}`}>
-                                {selectedLog?.action?.includes('CREATED') && '✨'}
-                                {selectedLog?.action?.includes('UPDATED') && '✏️'}
-                                {selectedLog?.action?.includes('DECOMMISSIONED') && '🗑️'}
-                                {selectedLog?.action?.includes('SIGNED') && '✍️'}
-                                {!selectedLog?.action?.includes('CREATED') && !selectedLog?.action?.includes('UPDATED') && !selectedLog?.action?.includes('DECOMMISSIONED') && !selectedLog?.action?.includes('SIGNED') && '📋'}
+                                {selectedLog?.action?.includes('CREATED') && '+'}
+                                {selectedLog?.action?.includes('UPDATED') && '*'}
+                                {selectedLog?.action?.includes('DECOMMISSIONED') && 'X'}
+                                {selectedLog?.action?.includes('SIGNED') && 'S'}
+                                {!selectedLog?.action?.includes('CREATED') && !selectedLog?.action?.includes('UPDATED') && !selectedLog?.action?.includes('DECOMMISSIONED') && !selectedLog?.action?.includes('SIGNED') && '#'}
                             </div>
                             <div>
                                 <span className="text-lg">{formatAction(selectedLog?.action || '')}</span>
@@ -282,7 +282,7 @@ export function AuditoriaList() {
 
                             {/* User Info */}
                             <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
-                                <span className="text-xs font-semibold text-blue-500 uppercase tracking-wide">👤 Usuario Responsable</span>
+                                <span className="text-xs font-semibold text-blue-500 uppercase tracking-wide">Usuario Responsable</span>
                                 <p className="mt-2 font-semibold text-blue-700 dark:text-blue-300 text-lg">
                                     {selectedLog.user_nombre ? `${selectedLog.user_nombre} ${selectedLog.user_apellido || ''}` : 'Sistema (Automático)'}
                                 </p>
@@ -292,7 +292,7 @@ export function AuditoriaList() {
 
                             {/* Changes Details */}
                             <div>
-                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-3">📝 Detalles del Cambio</span>
+                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide block mb-3">Detalles del Cambio</span>
                                 {selectedLog.details && typeof selectedLog.details === 'object' ? (
                                     <div className="bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 space-y-2">
                                         {Object.entries(selectedLog.details.changes || selectedLog.details).map(([key, value]) => (
