@@ -11,6 +11,9 @@ export interface AuditLog {
     user_nombre?: string;
     user_apellido?: string;
     user_email?: string;
+    equipo_nombre?: string;
+    equipo_codigo?: string;
+    ubicacion_nombre?: string;
     details: any; // Can be string or object
     created_at: string;
 }

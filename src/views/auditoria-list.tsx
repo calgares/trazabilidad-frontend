@@ -134,9 +134,10 @@ export function AuditoriaList() {
                             <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
                                 <TableRow>
                                     <TableHead className="w-[50px]"></TableHead>
-                                    <TableHead className="w-[180px]">Fecha / Hora</TableHead>
+                                    <TableHead className="w-[150px]">Fecha / Hora</TableHead>
                                     <TableHead>Evento</TableHead>
-                                    <TableHead>Entidad</TableHead>
+                                    <TableHead>Equipo</TableHead>
+                                    <TableHead>Ubicacion</TableHead>
                                     <TableHead>Usuario</TableHead>
                                     <TableHead className="text-right">Acciones</TableHead>
                                 </TableRow>
@@ -144,13 +145,13 @@ export function AuditoriaList() {
                             <TableBody>
                                 {loading && logs.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-32 text-center">
+                                        <TableCell colSpan={7} className="h-32 text-center">
                                             <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-500" />
                                         </TableCell>
                                     </TableRow>
                                 ) : logs.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} className="h-32 text-center text-slate-500 italic">
+                                        <TableCell colSpan={7} className="h-32 text-center text-slate-500 italic">
                                             No hay eventos registrados con estos filtros.
                                         </TableCell>
                                     </TableRow>
@@ -168,10 +169,16 @@ export function AuditoriaList() {
                                                     {log.action}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="font-mono text-xs">
-                                                <span className="font-semibold text-slate-700 dark:text-slate-300">{log.entity_type}</span>
-                                                <span className="text-slate-400 mx-1">#</span>
-                                                <span className="text-slate-500">{log.entity_id}</span>
+                                            <TableCell className="text-xs">
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                                    {log.equipo_nombre || log.entity_type}
+                                                </span>
+                                                {log.equipo_codigo && (
+                                                    <span className="text-slate-400 ml-1">({log.equipo_codigo})</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-xs text-slate-600 dark:text-slate-400">
+                                                {log.ubicacion_nombre || '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -179,7 +186,7 @@ export function AuditoriaList() {
                                                         {(log.user_nombre || '?')[0]}{(log.user_apellido || '?')[0]}
                                                     </div>
                                                     <span className="text-xs text-slate-600 dark:text-slate-400">
-                                                        {log.user_nombre ? `${log.user_nombre}` : 'Sistema'}
+                                                        {log.user_nombre ? `${log.user_nombre} ${log.user_apellido || ''}` : 'Sistema'}
                                                     </span>
                                                 </div>
                                             </TableCell>
@@ -229,39 +236,78 @@ export function AuditoriaList() {
 
             {/* Details Modal */}
             <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
-                <DialogContent className="max-w-[600px] border-slate-200 dark:border-slate-800">
-                    <DialogHeader>
-                        <DialogTitle>Detalle del Evento</DialogTitle>
+                <DialogContent className="max-w-[700px] border-slate-200 dark:border-slate-800 p-0 overflow-hidden">
+                    <DialogHeader className="p-5 pb-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+                        <DialogTitle className="flex items-center gap-3">
+                            <div className={`px-3 py-1 rounded-md text-xs font-bold ${getActionColor(selectedLog?.action || '')}`}>
+                                {selectedLog?.action}
+                            </div>
+                        </DialogTitle>
                         <DialogDescription className="font-mono text-xs">
                             ID: {selectedLog?.id}
                         </DialogDescription>
                     </DialogHeader>
 
                     {selectedLog && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <span className="text-slate-500 block text-xs">Accion</span>
-                                    <span className="font-semibold">{selectedLog.action}</span>
+                        <div className="p-5 space-y-4">
+                            {/* Main Info Grid */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <span className="text-xs font-semibold text-slate-400 uppercase">Equipo</span>
+                                    <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">
+                                        {selectedLog.equipo_nombre || selectedLog.entity_type}
+                                    </p>
+                                    {selectedLog.equipo_codigo && (
+                                        <p className="text-xs text-slate-500">Codigo: {selectedLog.equipo_codigo}</p>
+                                    )}
                                 </div>
-                                <div>
-                                    <span className="text-slate-500 block text-xs">Entidad</span>
-                                    <span className="font-mono">{selectedLog.entity_type} #{selectedLog.entity_id}</span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-500 block text-xs">Usuario</span>
-                                    <span>{selectedLog.user_nombre || 'Sistema'} {selectedLog.user_apellido}</span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-500 block text-xs">Fecha</span>
-                                    <span>{format(new Date(selectedLog.created_at), "PPP pp", { locale: es })}</span>
+                                <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <span className="text-xs font-semibold text-slate-400 uppercase">Ubicacion</span>
+                                    <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">
+                                        {selectedLog.ubicacion_nombre || 'Sin ubicacion'}
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="rounded-md bg-slate-950 p-4 overflow-auto max-h-[300px]">
-                                <pre className="text-xs text-green-400 font-mono">
-                                    {JSON.stringify(selectedLog.details, null, 2)}
-                                </pre>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
+                                    <span className="text-xs font-semibold text-blue-500 uppercase">Usuario Responsable</span>
+                                    <p className="mt-1 font-semibold text-blue-700 dark:text-blue-300">
+                                        {selectedLog.user_nombre ? `${selectedLog.user_nombre} ${selectedLog.user_apellido || ''}` : 'Sistema (Automatico)'}
+                                    </p>
+                                </div>
+                                <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <span className="text-xs font-semibold text-slate-400 uppercase">Fecha y Hora</span>
+                                    <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">
+                                        {format(new Date(selectedLog.created_at), "dd MMM yyyy", { locale: es })}
+                                    </p>
+                                    <p className="text-xs text-slate-500">
+                                        {format(new Date(selectedLog.created_at), "HH:mm:ss", { locale: es })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Changes Details */}
+                            <div>
+                                <span className="text-xs font-semibold text-slate-400 uppercase block mb-2">Detalles del Cambio</span>
+                                {selectedLog.details && typeof selectedLog.details === 'object' ? (
+                                    <div className="bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-3 space-y-1 max-h-[200px] overflow-auto">
+                                        {Object.entries(selectedLog.details.changes || selectedLog.details).map(([key, value]) => (
+                                            <div key={key} className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                                <span className="text-sm text-slate-600 dark:text-slate-400 capitalize">{key.replace(/_/g, ' ')}</span>
+                                                <span className="text-sm font-medium text-slate-800 dark:text-slate-200 max-w-[280px] truncate text-right">
+                                                    {typeof value === 'object' ? JSON.stringify(value) : String(value || '-')}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-md bg-slate-950 p-3 overflow-auto max-h-[150px]">
+                                        <pre className="text-xs text-green-400 font-mono">
+                                            {JSON.stringify(selectedLog.details, null, 2)}
+                                        </pre>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
