@@ -171,22 +171,22 @@ export function AuditoriaList() {
                                             </TableCell>
                                             <TableCell className="text-xs">
                                                 <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                                    {log.equipo_nombre || log.entity_type}
+                                                    {log.details?.nombre || log.details?.changes?.nombre || log.entity_type}
                                                 </span>
-                                                {log.equipo_codigo && (
-                                                    <span className="text-slate-400 ml-1">({log.equipo_codigo})</span>
+                                                {(log.details?.codigo_unico || log.details?.changes?.codigo_unico) && (
+                                                    <span className="text-slate-400 ml-1">({log.details?.codigo_unico || log.details?.changes?.codigo_unico})</span>
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-xs text-slate-600 dark:text-slate-400">
-                                                {log.ubicacion_nombre || '-'}
+                                                {log.details?.ubicacion_nombre || '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-400">
-                                                        {(log.user_nombre || '?')[0]}{(log.user_apellido || '?')[0]}
+                                                        S
                                                     </div>
                                                     <span className="text-xs text-slate-600 dark:text-slate-400">
-                                                        {log.user_nombre ? `${log.user_nombre} ${log.user_apellido || ''}` : 'Sistema'}
+                                                        Sistema
                                                     </span>
                                                 </div>
                                             </TableCell>
@@ -255,16 +255,16 @@ export function AuditoriaList() {
                                 <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
                                     <span className="text-xs font-semibold text-slate-400 uppercase">Equipo</span>
                                     <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">
-                                        {selectedLog.equipo_nombre || selectedLog.entity_type}
+                                        {selectedLog.details?.nombre || selectedLog.details?.changes?.nombre || selectedLog.entity_type}
                                     </p>
-                                    {selectedLog.equipo_codigo && (
-                                        <p className="text-xs text-slate-500">Codigo: {selectedLog.equipo_codigo}</p>
+                                    {(selectedLog.details?.codigo_unico || selectedLog.details?.changes?.codigo_unico) && (
+                                        <p className="text-xs text-slate-500">Codigo: {selectedLog.details?.codigo_unico || selectedLog.details?.changes?.codigo_unico}</p>
                                     )}
                                 </div>
                                 <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
                                     <span className="text-xs font-semibold text-slate-400 uppercase">Ubicacion</span>
                                     <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">
-                                        {selectedLog.ubicacion_nombre || 'Sin ubicacion'}
+                                        {selectedLog.details?.ubicacion_nombre || 'Sin ubicacion'}
                                     </p>
                                 </div>
                             </div>
@@ -273,7 +273,7 @@ export function AuditoriaList() {
                                 <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
                                     <span className="text-xs font-semibold text-blue-500 uppercase">Usuario Responsable</span>
                                     <p className="mt-1 font-semibold text-blue-700 dark:text-blue-300">
-                                        {selectedLog.user_nombre ? `${selectedLog.user_nombre} ${selectedLog.user_apellido || ''}` : 'Sistema (Automatico)'}
+                                        Sistema (Automatico)
                                     </p>
                                 </div>
                                 <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
