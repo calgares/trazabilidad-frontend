@@ -183,10 +183,10 @@ export function AuditoriaList() {
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <div className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-400">
-                                                        S
+                                                        {log.details?.user_nombre ? log.details.user_nombre.charAt(0).toUpperCase() : 'S'}
                                                     </div>
                                                     <span className="text-xs text-slate-600 dark:text-slate-400">
-                                                        Sistema
+                                                        {log.details?.user_nombre || 'Sistema'}
                                                     </span>
                                                 </div>
                                             </TableCell>
@@ -273,7 +273,7 @@ export function AuditoriaList() {
                                 <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-900">
                                     <span className="text-xs font-semibold text-blue-500 uppercase">Usuario Responsable</span>
                                     <p className="mt-1 font-semibold text-blue-700 dark:text-blue-300">
-                                        Sistema (Automatico)
+                                        {selectedLog.details?.user_nombre || 'Sistema (Automatico)'}
                                     </p>
                                 </div>
                                 <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
