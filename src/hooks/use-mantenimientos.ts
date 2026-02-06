@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
+// Helper to get auth headers
+const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
 export interface Mantenimiento {
     id: number; // or string, depending on DB
     equipo_id: string; // UUID
@@ -25,7 +31,9 @@ export function useMantenimientos() {
         async function fetchMantenimientos() {
             try {
                 setLoading(true);
-                const response = await fetch(`${API_URL}/api/mantenimientos`);
+                const response = await fetch(`${API_URL}/api/mantenimientos`, {
+                    headers: getAuthHeaders()
+                });
                 if (!response.ok) throw new Error('Error al cargar mantenimientos');
 
                 const data = await response.json();

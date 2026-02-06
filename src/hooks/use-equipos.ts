@@ -2,6 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
+// Helper to get auth headers
+const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
 export type EstadoOperativo = 'DISPONIBLE' | 'EN_OPERACION' | 'EN_MANTENIMIENTO' | 'FUERA_DE_SERVICIO' | 'BAJA';
 
 export interface Equipo {
@@ -37,7 +43,9 @@ export function useEquipos(page = 1, pageSize = 10) {
         try {
             setLoading(true)
 
-            const response = await fetch(`${API_URL}/api/equipos`);
+            const response = await fetch(`${API_URL}/api/equipos`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error('Error al cargar equipos');
             }

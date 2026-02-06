@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
+// Helper to get auth headers
+const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
 interface RecentActivity {
     id: string
     tipo_evento: string
@@ -44,7 +50,9 @@ export function useDashboardStats() {
                 setLoading(true)
 
                 // Fetch equipos desde la API
-                const response = await fetch(`${API_URL}/api/equipos`);
+                const response = await fetch(`${API_URL}/api/equipos`, {
+                    headers: getAuthHeaders()
+                });
                 if (!response.ok) throw new Error('Error cargando equipos');
 
                 const equipos: Equipo[] = await response.json();

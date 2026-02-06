@@ -66,7 +66,9 @@ export function useWorkOrders() {
     const getWorkOrders = useCallback(async (_filters?: { estado?: string; prioridad?: string; tecnico_id?: string }) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/work-orders`);
+            const response = await fetch(`${API_URL}/api/work-orders`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) throw new Error('Error cargando órdenes de trabajo');
 
             const data = await response.json();
@@ -90,7 +92,9 @@ export function useWorkOrders() {
     const getWorkOrderById = useCallback(async (id: string, includeDetails = false) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/work-orders/${id}`);
+            const response = await fetch(`${API_URL}/api/work-orders/${id}`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) throw new Error('Error cargando orden de trabajo');
 
             const ot = await response.json();
@@ -189,7 +193,9 @@ export function useWorkOrders() {
     const getWorkOrdersByEquipo = useCallback(async (equipoId: string) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/work-orders`);
+            const response = await fetch(`${API_URL}/api/work-orders`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) throw new Error('Error cargando órdenes');
 
             const data = await response.json();

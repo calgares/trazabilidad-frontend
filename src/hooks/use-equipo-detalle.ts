@@ -2,6 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
+// Helper to get auth headers
+const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
 // Type definitions
 export interface TipoEquipo {
     id: string
@@ -93,7 +99,9 @@ export function useEquipoDetalle(id: string | undefined) {
             setLoading(true)
 
             // Fetch Equipo desde la API
-            const response = await fetch(`${API_URL}/api/equipos/${id}`);
+            const response = await fetch(`${API_URL}/api/equipos/${id}`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) throw new Error('Error cargando equipo');
 
             const equipoData = await response.json();
