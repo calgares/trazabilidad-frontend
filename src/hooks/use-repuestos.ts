@@ -37,7 +37,9 @@ export function useRepuestos(equipoId: string) {
     const fetchRepuestos = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${API_URL}/api/repuestos/equipo/${equipoId}`);
+            const response = await fetch(`${API_URL}/api/repuestos/equipo/${equipoId}`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) throw new Error('Error al cargar repuestos');
             const data = await response.json();
 

@@ -2,6 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://trazamaster-trazabilidad-api.trklxg.easypanel.host';
 
+// Helper to get auth headers
+const getAuthHeaders = (): Record<string, string> => {
+    const token = localStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
 export interface Planta {
     id: string
     nombre: string
@@ -42,11 +48,12 @@ export function useCatalogos() {
         try {
             setLoading(true)
 
+            const headers = getAuthHeaders();
             const [plantasRes, areasRes, ubicacionesRes, tiposRes] = await Promise.all([
-                fetch(`${API_URL}/api/ubicaciones/plantas`),
-                fetch(`${API_URL}/api/ubicaciones/areas`),
-                fetch(`${API_URL}/api/ubicaciones`),
-                fetch(`${API_URL}/api/catalogos`)
+                fetch(`${API_URL}/api/ubicaciones/plantas`, { headers }),
+                fetch(`${API_URL}/api/ubicaciones/areas`, { headers }),
+                fetch(`${API_URL}/api/ubicaciones`, { headers }),
+                fetch(`${API_URL}/api/catalogos`, { headers })
             ]);
 
             const [pData, aData, uData, tData] = await Promise.all([
