@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom
 import { ThemeProvider } from "@/context/theme-provider";
 import { AuthProvider } from "@/context/auth-context";
 import { Layout } from "@/components/layout/Layout";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 
 import { Login } from "@/views/login";
 import { EquiposList } from "@/views/equipos-list";
@@ -35,9 +36,11 @@ function App() {
 
             <Route
               element={
-                <Layout>
-                  <Outlet />
-                </Layout>
+                <ProtectedRoute>
+                  <Layout>
+                    <Outlet />
+                  </Layout>
+                </ProtectedRoute>
               }
             >
 
